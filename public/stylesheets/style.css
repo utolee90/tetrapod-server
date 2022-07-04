@@ -1,0 +1,30 @@
+body {
+  padding: 20px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif; }
+
+a {
+  color: #00B7FF; }
+
+.contents {
+  padding: 5px;
+  margin-bottom: 20px; }
+
+.sub-title {
+  font-size: 1.1em;
+  font-weight: bold;
+  padding-top: 3px;
+  padding-bottom: 3px; }
+
+#support .subcontent-box {
+  display: flex;
+  justify-content: space-between; }
+  #support .subcontent-box .subcontent {
+    width: 30vw; }
+
+#usage .content-api {
+  border: 1px solid grey;
+  background-color: #ffffaf;
+  padding: 3px;
+  margin-bottom: 5px; }
+
+/*# sourceMappingURL=style.css.map */

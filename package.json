@@ -1,0 +1,19 @@
+{
+  "name": "tetrapod-server",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "express": "~4.16.1",
+    "hangul-js": "^0.2.6",
+    "morgan": "~1.9.1",
+    "node-sass-middleware": "0.11.0"
+  },
+  "devDependencies": {
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2"
+  }
+}
