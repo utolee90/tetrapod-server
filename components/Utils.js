@@ -6,10 +6,8 @@ let HO = require('./HangulObjects');
 const Utils = {
     ...HO,
 
-
     // 배열/오브젝트 동일성 체크
-    objectEqual: ObjectOperation.objectEqual
-    ,
+    objectEqual: ObjectOperation.objectEqual,
 
     // 배열/오브젝트의 포함관계 체크. a가 b안에 들어갈 때 True
     objectInclude: ObjectOperation.objectInclude,
@@ -34,32 +32,22 @@ const Utils = {
         let i = message.indexOf(search),
             indexes = []
         while (i !== -1) {
-            indexes.push(i)
+            // isString이 거짓이면 첫 글자 위치만 추가
+            if (!isString) indexes.push(i)
+
+            // isString이 참이면 글자 전체 위치 추가
+            else {
+                let adding = Array.from(Array(search.length).keys()).map(x => x+i);
+                indexes = indexes.concat(adding);
+            }
             i = message.indexOf(search, ++i)
         }
-        // isString이 거짓이면 그냥 단어의 첫 위치 리스트로 출력
-        if(!isString) return indexes
-
-        // isString이 참이면 단어의 첫 위치와 끝 위치 듀플 형식으로 출력력
-       let stringPoses = []
-        for(let wordIndex of indexes){
-            if(wordIndex === -1) continue
-            for(let i=0;i<search.length;i++)
-                stringPoses.push(wordIndex++)
-        }
-        return stringPoses
+        return indexes;
     },
 
     // manyArray => [[manyArray[0], manyArray[1]], [manyArray[1], manyArray[2]], ...]
     grabCouple: (manyArray) => {
-        let i = 0
-        let couple = []
-        for(;;){
-            if((manyArray.length - i) == 1) break
-            couple.push([manyArray[i], manyArray[i+1]])
-            if(++i>=manyArray.length) break
-        }
-        return couple
+        return manyArray.slice(0,-1).map((val, num)=> [val, manyArray[num+1]]);
     },
 
     // 단어 -> 낱자로 분리하는 함수. 매크로를 이용한 처리
@@ -70,26 +58,26 @@ const Utils = {
     // 바+ -> [바, 박, 밖,...]. 받침 포함.
     // wordToarray -
     wordToArray: word => {
-    let wordArray = []
-    for (let i = 0; i <= word.length - 1; i++) {
+        let wordArray = []
+        for (let i = 0; i <= word.length - 1; i++) {
 
-        if ((i===1 || i>1 && word[i-2]!== "." )&& word[i-1] === ".") {
-            wordArray.splice(-1, 1, word[i])
+            if ((i===1 || i>1 && word[i-2]!== "." )&& word[i-1] === ".") {
+                wordArray.splice(-1, 1, word[i])
+            }
+            // .뒤에 오지 않는 경우 ? 기호는 뒷 문자에 밀너허기
+            else if (word[i] === "?") {
+                wordArray.splice(-1, 1, wordArray.slice(-1)[0]+word[i])
+            }
+            // !, + 기호 관련. 한글 뒤에 오는 경우 앞 문자에 붙이기.
+            else if (i>0 && /[가-힣]/.test(word[i-1]) && (word[i] === "!" || word[i] === "+") ) {
+                wordArray.splice(-1, 1, wordArray.slice(-1)[0]+word[i])
+            }
+            // 그 외의 경우는 따로 놓기.
+            else {
+                wordArray.push(word[i])
+            }
         }
-        // .뒤에 오지 않는 경우 ? 기호는 뒷 문자에 밀너허기
-        else if (word[i] === "?") {
-            wordArray.splice(-1, 1, wordArray.slice(-1)[0]+word[i])
-        }
-        // !, + 기호 관련. 한글 뒤에 오는 경우 앞 문자에 붙이기.
-        else if (i>0 && /[가-힣]/.test(word[i-1]) && (word[i] === "!" || word[i] === "+") ) {
-            wordArray.splice(-1, 1, wordArray.slice(-1)[0]+word[i])
-        }
-        // 그 외의 경우는 따로 놓기.
-        else {
-            wordArray.push(word[i])
-        }
-    }
-    return wordArray
+        return wordArray
     },
 
     // 메시지를 특정 길이로 분리. 옵션 추가 -> full node 이외에 half node 옵션 추가.
@@ -103,7 +91,7 @@ const Utils = {
 
         let splitList = []
         let splitList2 = []
-        while (true) {
+        while (currentLength.length>=0) {
             if (currentLength == fullMessageLength) {
                 if (currentLength != 0) {
                     if (splitList.length > splitList2.length) {
@@ -184,7 +172,6 @@ const Utils = {
             return false
         }
     },
-
 
     // 리스트에서 특정 타입만 필터링
     filterList: (list, type) => {
@@ -461,8 +448,8 @@ const Utils = {
              }
          }
          */
-        let letterType ='';
-        let newLetterType='';
+        // let letterType ='';
+        // let newLetterType='';
         const msgAlphabet = msg.split(""); // 낱자별로 나누어 처리하기
         let msgAlphabetType = []; //타입별로 나누기
 
@@ -515,6 +502,17 @@ const Utils = {
                 }
             }
 
+            // 첫자음 잡아내는 함수 작성
+            const isFirstDouble = (var1, var2) => {
+                let res = false;
+                const valFirstDouble = [['7', '7'], ['c', 'c'], ['#', '#'], ['^','^'], ['^', 'n'], ['n', '^'], ['n','n'], ['#', '^'], ['^', '#']]
+
+                for (var dbl of valFirstDouble) {
+                    if (Utils.objectEqual([var1, var2], dbl)) res = true;
+                }
+                return res;
+            }
+
             switch(msgAlphabetType[i]) {
 
 
@@ -547,7 +545,7 @@ const Utils = {
                     }
                     break;
 
-                    // 받침 전용 자음의 경우 - 앞에 모음이 있으면 앞 음절에 붙이고 아님 그냥 나누기
+                // 받침 전용 자음의 경우 - 앞에 모음이 있으면 앞 음절에 붙이고 아님 그냥 나누기
                 case 'f':
                     if (i>0 && ['v', 'w'].indexOf(msgAlphabetType[i-1])>-1) {joinFrontSyllable()}
                     else splitSyllable();
@@ -573,17 +571,6 @@ const Utils = {
 
                 //유사 자음인 경우
                 case "d":
-
-                    // 첫자음 잡아내는 함수 작성
-                    const isFirstDouble = (var1, var2) => {
-                        let res = false;
-                        const valFirstDouble = [['7', '7'], ['c', 'c'], ['#', '#'], ['^','^'], ['^', 'n'], ['n', '^'], ['n','n'], ['#', '^'], ['^', '#']]
-
-                        for (var dbl of valFirstDouble) {
-                            if (Utils.objectEqual([var1, var2], dbl)) res = true;
-                        }
-                        return res;
-                    }
 
                     // 처음에는 그냥 삽입. 그러나 모음/유사모음 앞에서만큼은 자음으로 변형되서 들어간다.
                     if (i === 0 ) {
@@ -761,9 +748,9 @@ const Utils = {
                     if (i===0 && Utils.charInitials.indexOf(msgAlphabet[0])!== -1 && Utils.charInitials.indexOf(msgAlphabet[1])!== -1 && msgAlphabet[1]!=="ㅇ" && Utils.charMedials.indexOf(msgAlphabet[2])!==-1 ) {
                         msgAlphabet.shift();
                     }
-                    // 모음 뒤에 모음이 바로 오는 경우 맨 앞글자를 제거한다.
-                    // else if (i===0 && Utils.charMedials.indexOf(msgAlphabet[0])!== -1 && Utils.charMedials.indexOf(msgAlphabet[1])!== -1) {
-                    //     msgAlphabet.shift();
+                        // 모음 뒤에 모음이 바로 오는 경우 맨 앞글자를 제거한다.
+                        // else if (i===0 && Utils.charMedials.indexOf(msgAlphabet[0])!== -1 && Utils.charMedials.indexOf(msgAlphabet[1])!== -1) {
+                        //     msgAlphabet.shift();
                     // }
                     else i++;
                 }
@@ -810,7 +797,7 @@ const Utils = {
         }
         // isMap으로 정의할 경우 음절 단위로 우선 쪼갠 뒤 dropDouble 수행
         else {
-            var i =0;
+            i =0;
             while ( i < msgAlphabet.length ) {
 
                 // 처음일 때는
@@ -837,7 +824,7 @@ const Utils = {
                             }
                             // 자음+단모음+ㅇ+유사모음 패턴 - ㅇ과 유사모음을 앞음절로
                             else if (i>1 && i<msgAlphabet.length-1 && Utils.charInitials.indexOf(msgAlphabet[i-2])!==-1 &&
-                            Object.keys(vowelLast).indexOf(msgAlphabet[i-1])!== -1 && vowelLast[msgAlphabet[i-1]].indexOf(msgAlphabet[i+1]) !== -1) {
+                                Object.keys(vowelLast).indexOf(msgAlphabet[i-1])!== -1 && vowelLast[msgAlphabet[i-1]].indexOf(msgAlphabet[i+1]) !== -1) {
                                 singleSyllable = singleSyllable.concat([msgAlphabet[i], msgAlphabet[i+1]]);
                                 i +=2;
                             }
@@ -847,7 +834,7 @@ const Utils = {
                                 singleSyllable = singleSyllable.concat([msgAlphabet[i], msgAlphabet[i+1]]);
                                 i +=2;
                             }
-                            // 자음 + 모음+ ㅇ+모음 -> 복모음 형성가능한 경우
+                                // 자음 + 모음+ ㅇ+모음 -> 복모음 형성가능한 경우
                             // 자음 + 모음 + ㅇ + 모음에서 앞모음+뒷모음이 복모음을 형성할 수 있는 경우 ㅇ을 앞에 붙임
                             else if (i>1 && i < msgAlphabet.length - 1 && Utils.charMedials.indexOf(msgAlphabet[i - 1]) !== -1 && Utils.charMedials.indexOf(msgAlphabet[i + 1]) !== -1 &&
                                 Utils.charInitials.indexOf(msgAlphabet[i - 2]) !== -1 ) {
@@ -1109,7 +1096,7 @@ const Utils = {
         }
         if (contCnt>2 && (newMsg.length/cnt)<=3) {
             let txt =[]
-            for (var i in msg) {
+            for (i in msg) {
                 if (pos.indexOf(i)>-1)
                     txt.push(msg[i]);
             }
@@ -1119,9 +1106,6 @@ const Utils = {
             return {val:false, pos:[], txt:[]};
         }
     }
-
 }
-
-const simMiddle = Utils.simMiddle;
 
 module.exports = Utils;

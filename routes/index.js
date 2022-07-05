@@ -11,7 +11,6 @@ let badWords = Tetrapod.getLoadedData().badWords;
 let normalWords = Tetrapod.getLoadedData().normalWords;
 let vulgarWords = Tetrapod.getLoadedData().softSearchWords;
 
-
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
@@ -60,7 +59,6 @@ router.get('/replace', function(req, res, next) {
   }
   res.send(Tetrapod.fix(inputSentence, replaceChar, obj));
 });
-
 
 
 module.exports = router;

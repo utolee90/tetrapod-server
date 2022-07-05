@@ -23,7 +23,7 @@ const ObjectOperation = {
 
     },
 
-    // 배열/오브젝트의 포함관계 체크. a가 b안에 들어갈 때 True
+    // 배열/오브젝트의 포함관계 체크. obj(a, b)에서  a가 b안에 들어갈 때 True
     objectInclude: (inc, exc, order=false) => {
         let val = true;
         // 순서 생각하지 않고 포함관계
@@ -72,7 +72,6 @@ const ObjectOperation = {
             if (!ObjectOperation.objectIn(x, res)) res.push(x);
         }
         return res;
-
     },
 
     // 리스트/함수 합성 등 여러 상황에서 합성할 때 사용함.
@@ -143,8 +142,8 @@ const ObjectOperation = {
                 let res0 = ObjectOperation.productList(list.slice(0,-1));
                 if (res0.length ===0 || list.slice(-1)[0].length===0) return [];
                 else {
-                    for (var fele of res0) {
-                        for (var sele of list.slice(-1)[0]) {
+                    for (fele of res0) {
+                        for (sele of list.slice(-1)[0]) {
                             res.push([...fele, sele]);
                         }
                     }
@@ -209,7 +208,6 @@ const ObjectOperation = {
         else return [];
 
     },
-
 
 };
 

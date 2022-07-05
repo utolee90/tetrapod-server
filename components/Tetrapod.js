@@ -96,7 +96,7 @@ class Tetrapod {
         this.load(data.badWords, data.normalWords, data.softSearchWords, data.exceptWords, data.typeofBadWords, data.badWordMacros, disableAutoParse)
     }
 
-    // 기본 비속어 사전의 목록 로드. 사용방법 - Tetrapod.defaultLoad()
+    // 기본 비속어 사전의 목록 로드
     static defaultLoad() {
         let data = this.getDefaultData()
         // console.log(Object.keys(data))
@@ -135,36 +135,36 @@ class Tetrapod {
         // softSearchWord 파싱
         for (let index in softSearchWords) {
             // if (!this.testInList( Utils.wordToArray(softSearchWords[index]), parsedSoftSearchWords ) )
-                parsedSoftSearchWords.push(Utils.wordToArray(softSearchWords[index]))
+            parsedSoftSearchWords.push(Utils.wordToArray(softSearchWords[index]))
         }
         // softSearchWords에 들어가지 않는 단어들만 집어넣기
         for (let index in typeofBadWords.drug) {
             // if (
             //    !this.testInList( Utils.wordToArray(typeofBadWords.drug[index]), parsedDrugWords )
-                // && !Utils.objectIn(Utils.wordToArray(typeofBadWords.drug[index]), parsedSoftSearchWords)
+            // && !Utils.objectIn(Utils.wordToArray(typeofBadWords.drug[index]), parsedSoftSearchWords)
             //)
-                parsedDrugWords.push(Utils.wordToArray(typeofBadWords.drug[index]))
+            parsedDrugWords.push(Utils.wordToArray(typeofBadWords.drug[index]))
         }
         for (let index in typeofBadWords.insult) {
             // if (
             //    !this.testInList( Utils.wordToArray(typeofBadWords.insult[index]), parsedInsultWords )
             //     // && !Utils.objectIn(Utils.wordToArray(typeofBadWords.insult[index]), parsedSoftSearchWords)
             // )
-                parsedInsultWords.push(Utils.wordToArray(typeofBadWords.insult[index]))
+            parsedInsultWords.push(Utils.wordToArray(typeofBadWords.insult[index]))
         }
         for (let index in typeofBadWords.sexuality) {
             // if (
             //     !this.testInList( Utils.wordToArray(typeofBadWords.sexuality[index]), parsedSexualityWords )
             //    // && !Utils.objectIn(Utils.wordToArray(typeofBadWords.sexuality[index]), parsedSoftSearchWords)
             //)
-                parsedSexualityWords.push(Utils.wordToArray(typeofBadWords.drug[index]))
+            parsedSexualityWords.push(Utils.wordToArray(typeofBadWords.drug[index]))
         }
         for (let index in typeofBadWords.violence) {
             // if (
             //    !this.testInList( Utils.wordToArray(typeofBadWords.violence[index]), parsedViolenceWords )
             //    // && !Utils.objectIn(Utils.wordToArray(typeofBadWords.violence[index]), parsedViolenceWords)
             //)
-                parsedViolenceWords.push(Utils.wordToArray(typeofBadWords.violence[index]))
+            parsedViolenceWords.push(Utils.wordToArray(typeofBadWords.violence[index]))
         }
 
 
@@ -172,13 +172,13 @@ class Tetrapod {
         for (let index in badWords) {
             // if (
             //    !this.testInList( Utils.wordToArray(badWords[index]), parsedBadWords )
-                // && !Utils.objectIn(Utils.wordToArray(badWords[index]), parsedSoftSearchWords)
-                // && !Utils.objectIn(Utils.wordToArray(badWords[index]), parsedDrugWords)
-                // && !Utils.objectIn(Utils.wordToArray(badWords[index]), parsedInsultWords)
-                // && !Utils.objectIn(Utils.wordToArray(badWords[index]), parsedSexualityWords)
-                // && !Utils.objectIn(Utils.wordToArray(badWords[index]), parsedViolenceWords)
+            // && !Utils.objectIn(Utils.wordToArray(badWords[index]), parsedSoftSearchWords)
+            // && !Utils.objectIn(Utils.wordToArray(badWords[index]), parsedDrugWords)
+            // && !Utils.objectIn(Utils.wordToArray(badWords[index]), parsedInsultWords)
+            // && !Utils.objectIn(Utils.wordToArray(badWords[index]), parsedSexualityWords)
+            // && !Utils.objectIn(Utils.wordToArray(badWords[index]), parsedViolenceWords)
             // )
-                parsedBadWords.push(Utils.wordToArray(badWords[index]))
+            parsedBadWords.push(Utils.wordToArray(badWords[index]))
         }
 
         console.log("before Sorting Words", new Date().getTime())
@@ -298,6 +298,11 @@ class Tetrapod {
     }
 
     // 데이터 저장
+    static defaultSaveAllData() {
+        !fs.existsSync('./resource/dictionary') && fs.mkdirSync('./resource/dictionary');
+        this.saveAllData('./dictionaries/bad-words.json', './dictionaries/normal-words.json', './dictionaries/soft-search-words.json', './dictionaries/macros.json', false)
+    }
+
     static saveAllData(badWordsPath, normalWordsPath, softSearchWordsPath, badWordMacrosPath, isAsync) {
         this.saveBadWordsData(badWordsPath, isAsync)
         this.saveNormalWordsData(normalWordsPath, isAsync)
@@ -305,7 +310,6 @@ class Tetrapod {
         this.saveBadWordMacros(badWordMacrosPath, isAsync)
     }
 
-    // 비속어 데이터 저장
     static saveBadWordMacros(path, isAsync) {
         let data = JSON.stringify(
             badWordMacros, null, 4
@@ -387,13 +391,13 @@ class Tetrapod {
             for (var x of searchResult.totalResult) {
                 bad += x.positions.length
             }
-            for (var x of searchResult.softResult) {
+            for (x of searchResult.softResult) {
                 soft += x.positions.length
             }
-            for (var x of searchResult.originalTotalResult) {
+            for (x of searchResult.originalTotalResult) {
                 bad2 += x.positions.length
             }
-            for (var x of searchResult.originalSoftResult) {
+            for (x of searchResult.originalSoftResult) {
                 soft2 += x.positions.length
             }
 
@@ -420,7 +424,7 @@ class Tetrapod {
 
         //보조 메시지
         let message2Map = {};
-        let message2 = ''
+        // let message2 = ''
         let message3Map = {}
         let message3 = ''
         let message4Map = {}
@@ -428,7 +432,7 @@ class Tetrapod {
 
         if (qwertyToDubeol === true && isStrong === false) { // 만약 한영 검사가 필요하면...
             message2Map = Utils.qwertyToDubeol(message, true);
-            message2 = Utils.qwertyToDubeol(message, false); // 2차 점검용
+            // message2 = Utils.qwertyToDubeol(message, false); // 2차 점검용
         }
         if (isStrong === true) { // 문자열을 악용한 것까지 잡아보자.
             message3Map = Utils.antispoof(message, true);
@@ -519,23 +523,23 @@ class Tetrapod {
                         if (currentResult.found !== [] && totalResult.map(v=>v.value).indexOf(currentResult.found[index])===-1)
                             totalResult = [...totalResult, {value:currentResult.found[index], positions:currentResult.positions[index]}  ];
                     }
-                    for (index = 0; index <= currentResult2.softSearchFound.length - 1; index++) {
+                    for (index = 0; index <= currentResult.softSearchFound.length - 1; index++) {
                         if (currentResult.softSearchFound !== [] && softResult.map(v=>v.value).indexOf(currentResult.softSearchFound[index])===-1)
                             softResult = [...softResult, {value:currentResult.softSearchFound[index], positions:currentResult.softSearchPositions[index]}];
                     }
-                    for (var index = 0; index <= currentResultDrug.found.length - 1; index++) {
+                    for (index = 0; index <= currentResultDrug.found.length - 1; index++) {
                         if (currentResultDrug.found !== [] && totalResult.map(v=>v.value).indexOf(currentResultDrug.found[index])===-1)
                             totalResult = [...totalResult, {value:currentResultDrug.found[index], positions:currentResultDrug.positions[index], type:"drug"}  ];
                     }
-                    for (var index = 0; index <= currentResultInsult.found.length - 1; index++) {
+                    for (index = 0; index <= currentResultInsult.found.length - 1; index++) {
                         if (currentResultInsult.found !== [] && totalResult.map(v=>v.value).indexOf(currentResultInsult.found[index])===-1)
                             totalResult = [...totalResult, {value:currentResultInsult.found[index], positions:currentResultInsult.positions[index], type:"insult"}  ];
                     }
-                    for (var index = 0; index <= currentResultSexuality.found.length - 1; index++) {
+                    for (index = 0; index <= currentResultSexuality.found.length - 1; index++) {
                         if (currentResultSexuality.found !== [] && totalResult.map(v=>v.value).indexOf(currentResultSexuality.found[index])===-1)
                             totalResult = [...totalResult, {value:currentResultSexuality.found[index], positions:currentResultSexuality.positions[index], type:"sexuality"}  ];
                     }
-                    for (var index = 0; index <= currentResultViolence.found.length - 1; index++) {
+                    for (index = 0; index <= currentResultViolence.found.length - 1; index++) {
                         if (currentResultViolence.found !== [] && totalResult.map(v=>v.value).indexOf(currentResultViolence.found[index])===-1)
                             totalResult = [...totalResult, {value:currentResultViolence.found[index], positions:currentResultViolence.positions[index], type:"violence"}  ];
                     }
@@ -576,7 +580,7 @@ class Tetrapod {
             tooMuchEnds.push(currentResult.tooMuchDoubleEnd);
 
             if (needMultipleCheck) {
-                for (var index =0; index<currentResult.found.length; index++) {
+                for (index =0; index<currentResult.found.length; index++) {
                     if (currentResult.found !==[] && originalTotalResult.map(v=>v.value).indexOf(currentResult.found[index]) ===-1)
                         originalTotalResult = [...originalTotalResult, {value:currentResult.found[index], positions:currentResult.positions[index]}];
                 }
@@ -585,19 +589,19 @@ class Tetrapod {
                         originalSoftResult = [...originalSoftResult, {value:currentResult.softSearchFound[index], positions: currentResult.softSearchPositions[index]}]
                     }
                 }
-                for (var index =0; index<currentResultDrug.found.length; index++) {
+                for (index =0; index<currentResultDrug.found.length; index++) {
                     if (currentResultDrug.found !==[] && originalTotalResult.map(v=>v.value).indexOf(currentResultDrug.found[index]) ===-1)
                         originalTotalResult = [...originalTotalResult, {value:currentResultDrug.found[index], positions:currentResultDrug.positions[index], type:"drug"}];
                 }
-                for (var index =0; index<currentResultInsult.found.length; index++) {
+                for (index =0; index<currentResultInsult.found.length; index++) {
                     if (currentResultInsult.found !==[] && originalTotalResult.map(v=>v.value).indexOf(currentResultInsult.found[index]) ===-1)
                         originalTotalResult = [...originalTotalResult, {value:currentResultInsult.found[index], positions:currentResultInsult.positions[index], type:"insult"}];
                 }
-                for (var index =0; index<currentResultSexuality.found.length; index++) {
+                for (index =0; index<currentResultSexuality.found.length; index++) {
                     if (currentResultSexuality.found !==[] && originalTotalResult.map(v=>v.value).indexOf(currentResultSexuality.found[index]) ===-1)
                         originalTotalResult = [...originalTotalResult, {value:currentResultSexuality.found[index], positions:currentResultSexuality.positions[index], type:"sexuality"}];
                 }
-                for (var index =0; index<currentResultViolence.found.length; index++) {
+                for (index =0; index<currentResultViolence.found.length; index++) {
                     if (currentResultViolence.found !==[] && originalTotalResult.map(v=>v.value).indexOf(currentResultViolence.found[index]) ===-1)
                         originalTotalResult = [...originalTotalResult, {value:currentResultViolence.found[index], positions:currentResultViolence.positions[index], type:"violence"}];
                 }
@@ -611,19 +615,19 @@ class Tetrapod {
                         softResult = [...softResult, {value:currentResult2.softSearchFound[index], positions: currentResult2.softSearchPositions[index]}]
                     }
                 }
-                for (var index =0; index<currentResultDrug2.found.length; index++) {
+                for (index =0; index<currentResultDrug2.found.length; index++) {
                     if (currentResultDrug2.found !==[] && totalResult.map(v=>v.value).indexOf(currentResultDrug2.found[index]) ===-1)
                         totalResult = [...totalResult, {value:currentResultDrug2.found[index], positions:currentResultDrug.positions[index], type:"drug"}];
                 }
-                for (var index =0; index<currentResultInsult2.found.length; index++) {
+                for (index =0; index<currentResultInsult2.found.length; index++) {
                     if (currentResultInsult2.found !==[] && totalResult.map(v=>v.value).indexOf(currentResultInsult2.found[index]) ===-1)
                         totalResult = [...totalResult, {value:currentResultInsult2.found[index], positions:currentResultInsult2.positions[index], type:"insult"}];
                 }
-                for (var index =0; index<currentResultSexuality2.found.length; index++) {
+                for (index =0; index<currentResultSexuality2.found.length; index++) {
                     if (currentResultSexuality2.found !==[] && totalResult.map(v=>v.value).indexOf(currentResultSexuality2.found[index]) ===-1)
                         totalResult = [...totalResult, {value:currentResultSexuality2.found[index], positions:currentResultSexuality2.positions[index], type:"sexuality"}];
                 }
-                for (var index =0; index<currentResultViolence2.found.length; index++) {
+                for (index =0; index<currentResultViolence2.found.length; index++) {
                     if (currentResultViolence2.found !==[] && totalResult.map(v=>v.value).indexOf(currentResultViolence2.found[index]) ===-1)
                         totalResult = [...totalResult, {value:currentResultViolence2.found[index], positions:currentResultViolence2.positions[index], type:"violence"}];
                 }
@@ -735,7 +739,7 @@ class Tetrapod {
         for (let softSearchWord of parsedSoftSearchWords) {
 
             // 단순히 찾는 것으로 정보를 수집하는 것이 아닌 위치를 아예 수집해보자.
-             // findCount 형태 : {바: [1,8], 보:[2,7,12]}등
+            // findCount 형태 : {바: [1,8], 보:[2,7,12]}등
             let findCount = {}
             // 저속한 단어 수집 형태. 이 경우는 [[1,2], [8,7]]로 수집된다.
             let softSearchWordPositions = []
@@ -939,7 +943,7 @@ class Tetrapod {
 
                     if (isMap) {
 
-                        for (var pos of tempSoftSearchWordPositions) {
+                        for (pos of tempSoftSearchWordPositions) {
 
                             // 갯수 세기. isReassemble일 때에는 한글 낱자의 갯수만 센다.
                             let originalCount = originalMessageList[Number(pos)].length;
@@ -948,7 +952,7 @@ class Tetrapod {
                             }
                             for (var k =0; k <originalCount; k++) {
 
-                                    tempSoftSearchWordOriginalPositions.push(originalMessageSyllablePositions[pos] + k);
+                                tempSoftSearchWordOriginalPositions.push(originalMessageSyllablePositions[pos] + k);
                             }
                         }
                         // 원문 찾기
@@ -1012,8 +1016,10 @@ class Tetrapod {
                 break;
             case "sexuality":
                 typeofBadWordsList = parsedSexualityWords
+                break;
             case "violence":
                 typeofBadWordsList = parsedViolenceWords
+                break;
             default:
                 typeofBadWordsList = parsedBadWords
         }
@@ -1135,8 +1141,8 @@ class Tetrapod {
                 let isShuffled = false
 
                 // 포지션 체크. 단어에서 뒤에 올 글자가 앞에 올 글자보다 3글자 이상 앞에 오면 isNeedToPass를 띄운다.
-                for (var pos =0; pos<wordPosition.length; pos++) {
-                    for (var pos1 =0; pos1<pos; pos1++) {
+                for (pos =0; pos<wordPosition.length; pos++) {
+                    for (pos1 =0; pos1<pos; pos1++) {
                         if (wordPosition[pos1] - wordPosition[pos]<-3) {
                             isNeedToPass = true; break;
                         }
@@ -1228,7 +1234,7 @@ class Tetrapod {
                 if(isNeedToPass) continue
 
                 // 중복 비속어 체크하기.
-                var tmpTF = true;
+                tmpTF = true;
                 for (let positions of foundBadWordPositions) {
                     // 다른 비속어와 포지션이 일치할 때 강제 종료
                     for (let badPosition of positions) {
@@ -1293,20 +1299,20 @@ class Tetrapod {
                     // map일 때는 메시지 더 찾기
                     if (isMap) {
 
-                        for (var pos of tempBadWordPositions) {
+                        for (pos of tempBadWordPositions) {
                             // 갯수 세기. isReassemble일 때에는 한글 낱자의 갯수만 센다.
                             let originalCount = originalMessageList[Number(pos)].length;
                             if (isReassemble) {
                                 originalCount = originalMessageList[Number(pos)].split("").filter(x=>/[가-힣]/.test(x)).length
                             }
 
-                            for (var k =0; k <originalCount; k++) {
+                            for (k =0; k <originalCount; k++) {
                                 tempBadWordOriginalPositions.push( originalMessageSyllablePositions[pos] + k);
                             }
                         }
                         // 원문 찾기
                         let originalBadWord = "";
-                        for (var k of tempBadWordOriginalPositions) {
+                        for (k of tempBadWordOriginalPositions) {
                             originalBadWord +=originalMessage[k];
                         }
                         badWordOriginalPositions.push(tempBadWordOriginalPositions);
@@ -1352,21 +1358,21 @@ class Tetrapod {
         let tooMuchDouble ={val:false, pos:[], txt:[]};
 
         tooMuchDouble = {
-                val: tooMuchDouble.val || Utils.tooMuchDoubleEnd(newMessage).val,
-                pos: [...tooMuchDouble.pos, ...Utils.tooMuchDoubleEnd(newMessage).pos],
-                txt: [...tooMuchDouble.txt, ...Utils.tooMuchDoubleEnd(newMessage).txt]
-            }
+            val: tooMuchDouble.val || Utils.tooMuchDoubleEnd(newMessage).val,
+            pos: [...tooMuchDouble.pos, ...Utils.tooMuchDoubleEnd(newMessage).pos],
+            txt: [...tooMuchDouble.txt, ...Utils.tooMuchDoubleEnd(newMessage).txt]
+        }
 
 
-            let isMapAdded = {};
-            if (isMap) {
-                isMapAdded = {
-                    originalFound: needMultipleCheck ? foundBadOriginalWords : foundBadOriginalWords.slice(0).slice(0),
-                    originalPositions: needMultipleCheck ? foundBadWordOriginalPositions : foundBadWordOriginalPositions.slice(0).slice(0),
-                    originalSoftSearchFound : needMultipleCheck ? foundSoftSearchOriginalWords : foundSoftSearchOriginalWords.slice(0).slice(0),
-                    originalSoftSearchPositions : needMultipleCheck ? foundSoftSearchWordOriginalPositions : foundSoftSearchWordOriginalPositions.slice(0).slice(0)
-                };
-            }
+        let isMapAdded = {};
+        if (isMap) {
+            isMapAdded = {
+                originalFound: needMultipleCheck ? foundBadOriginalWords : foundBadOriginalWords.slice(0).slice(0),
+                originalPositions: needMultipleCheck ? foundBadWordOriginalPositions : foundBadWordOriginalPositions.slice(0).slice(0),
+                originalSoftSearchFound : needMultipleCheck ? foundSoftSearchOriginalWords : foundSoftSearchOriginalWords.slice(0).slice(0),
+                originalSoftSearchPositions : needMultipleCheck ? foundSoftSearchWordOriginalPositions : foundSoftSearchWordOriginalPositions.slice(0).slice(0)
+            };
+        }
 
         // 결과 출력
         return {
@@ -1553,7 +1559,7 @@ class Tetrapod {
                 for(let diffRangeIndex in positionInterval){
 
                     let tempCnt = numberOfQs[diffRangeIndex]
-                    let tempQList = []; // ?에 해당하는 문자의 위치 찾기.
+                    let tempQlist = []; // ?에 해당하는 문자의 위치 찾기.
 
                     // 글자간 사이에 있는 모든 글자를 순회합니다.
                     let diff = ''
@@ -1583,7 +1589,7 @@ class Tetrapod {
                         }
                     }
 
-                    collectionTempQList[diffRangeIndex] = tempQList
+                    collectionTempQList[diffRangeIndex] = tempQlist
                 }
 
 
@@ -1635,7 +1641,7 @@ class Tetrapod {
                             originalCount = originalMessageList[Number(pos)].split("").filter(x=>/[가-힣]/.test(x)).length
                         }
 
-                        for (var pos of tempBadWordPositions) {
+                        for (pos of tempBadWordPositions) {
                             for (var k =0; k <originalCount; k++) {
 
                                 tempBadWordOriginalPositions.push(originalMessageSyllablePositions[pos] + k);
@@ -1713,25 +1719,25 @@ class Tetrapod {
 
         let fixedMessage = "";
         let fixedMessageList = [];
-        let fixedMessageIndex = []
+        // let fixedMessageIndex = []
         let fixedMessageObject = {}
         // condition
         if (condition.qwertyToDubeol === true) {
             fixedMessageObject = this.nativeFind(Utils.qwertyToDubeol(message, true), true, true)
             fixedMessageList = condition.isOriginal ? Utils.parseMap(Utils.qwertyToDubeol(message, true)).messageList : Utils.parseMap(Utils.qwertyToDubeol(message, true)).parsedMessage
-            fixedMessageIndex = Utils.parseMap(Utils.qwertyToDubeol(message, true)).messageIndex;
+            // fixedMessageIndex = Utils.parseMap(Utils.qwertyToDubeol(message, true)).messageIndex;
             // fixedMessage = fixedMessageList.join("")
         }
         else if (condition.dropDouble=== true) {
             fixedMessageObject = this.nativeFind(Utils.dropDouble(message, true), true, true, true)
             fixedMessageList = condition.isOriginal? Utils.parseMap(Utils.dropDouble(message, true)).messageList:Utils.parseMap(Utils.dropDouble(message, true)).parsedMessage
-            fixedMessageIndex = Utils.parseMap(Utils.dropDouble(message, true)).messageIndex;
+            // fixedMessageIndex = Utils.parseMap(Utils.dropDouble(message, true)).messageIndex;
             // fixedMessage = fixedMessageList.join("")
         }
         else if (condition.antispoof === true) {
             fixedMessageObject = this.nativeFind(Utils.antispoof(message, true), true, true)
             fixedMessageList = condition.isOriginal? Utils.parseMap(Utils.antispoof(message, true)).messageList: Utils.parseMap(Utils.antispoof(message, true)).parsedMessage
-            fixedMessageIndex = Utils.parseMap(Utils.antispoof(message, true)).messageIndex;
+            // fixedMessageIndex = Utils.parseMap(Utils.antispoof(message, true)).messageIndex;
             // fixedMessage = fixedMessageList.join("")
         }
         else {
@@ -1747,18 +1753,18 @@ class Tetrapod {
         // 원본 메시지가 아닌 변환된 메시지의 욕설을 숨김자 처리하려고 할 때
         if (!condition.isOriginal) {
             for (let index in fixedMessageList) {
+                for (let positions of fixedMessageObject.positions) {
+                    // object에서 position이 발견되는 경우 대체한다.
+                    for (let position of positions)
+                    {
+
+                        if (position.indexOf(parseInt(index))!==-1) fixedMessageList[index] = replaceCharacter
+                    }
+
+                }
+                if (condition.fixSoft) {
                     for (let positions of fixedMessageObject.positions) {
                         // object에서 position이 발견되는 경우 대체한다.
-                        for (let position of positions)
-                        {
-
-                            if (position.indexOf(parseInt(index))!==-1) fixedMessageList[index] = replaceCharacter
-                        }
-
-                    }
-                if (condition.fixSoft) {
-                    for (let positions of obj.positions) {
-                            // object에서 position이 발견되는 경우 대체한다.
                         for (let position of positions)
                         {
                             if (position.indexOf(parseInt(index))!==-1) fixedMessageList[index] = replaceCharacter
@@ -1773,21 +1779,21 @@ class Tetrapod {
         // 원본 메시지의 욕설을 숨김처리하려고 할 때
         else {
             for (let index in fixedMessageList) {
+                for (let positions of fixedMessageObject.positions) {
+                    // object에서 position이 발견되는 경우 대체한다.
+                    for (let position of positions) {
+                        if (position.indexOf(parseInt(index))!==-1) fixedMessageList[index] = replaceCharacter
+                    }
+
+                }
+                if (condition.fixSoft) {
                     for (let positions of fixedMessageObject.positions) {
                         // object에서 position이 발견되는 경우 대체한다.
                         for (let position of positions) {
+
                             if (position.indexOf(parseInt(index))!==-1) fixedMessageList[index] = replaceCharacter
                         }
-
                     }
-                if (condition.fixSoft) {
-                        for (let positions of fixedMessageObject.positions) {
-                            // object에서 position이 발견되는 경우 대체한다.
-                            for (let position of positions) {
-
-                                if (position.indexOf(parseInt(index))!==-1) fixedMessageList[index] = replaceCharacter
-                            }
-                        }
                     if (fixedMessageObject.tooMuchDoubleEnd.pos.indexOf(index.toString()) !== -1)
                         fixedMessageList[index] = replaceCharacter
                 }
@@ -1953,7 +1959,7 @@ class Tetrapod {
             case "insult":
             case "sexuality":
             case "violencc":
-                for (let wordsIndex in Words) {
+                for (let wordsIndex in words) {
                     let word = words[wordsIndex]
                     if (word.length ===0 ) continue
                     if (this.isExistBadWord(word, type)) continue
@@ -2037,7 +2043,7 @@ class Tetrapod {
                     // 공백이 들어가면 단어로 추가
                     else if (char === " ") {cnt++; tempCnt = 0;}
                     // 특정문자는 없는 것처럼 처리함.
-                    else if (/^[,\.!\?:;"'&\-()0-9]$/.test(char)) {
+                    else if (/^[,.!?:;"'&\-()0-9]$/.test(char)) {
                         continue;
                     }
                     // 다른 문자는 그냥 영단어 숫자 초기화.
@@ -2237,7 +2243,7 @@ class Tetrapod {
             for(let itemIndex in data[i]){
                 let item = data[i][itemIndex]
 
-               // console.log("item LIST:::", item)
+                // console.log("item LIST:::", item)
 
                 // 데이터 항목이 배열인 경우
                 // 재귀 컴포넌트 해석을 진행합니다.
@@ -2267,23 +2273,23 @@ class Tetrapod {
                     // console.log("varName", varName)
 
                     if(typeof variable[varName] !== 'undefined'){
-                       //  console.log(`1함수호출됨: ${varName}`)
+                        //  console.log(`1함수호출됨: ${varName}`)
 
                         data[i] = data[i].concat(variable[varName])
                         // data[i] = this.assembleHangul(data[i])
                     }
                     // 아니면 nonParsedVariable에서 변수가 있는지 확인해보기.
                     else {
-                       //  console.log(`2함수호출됨: ${varName}`)
+                        //  console.log(`2함수호출됨: ${varName}`)
                         // 만약 변수 안에서 변수를 참조한 경우
                         // 필요한 부분의 변수만 파싱하여 해당 리스트를 구성합니다.
                         if(nonParsedVariable !== null){
-                          //   console.log(`2함수진행됨: ${varName}`)
+                            //   console.log(`2함수진행됨: ${varName}`)
                             let parsedHeaderVariable = this.recursiveList(nonParsedVariable[varName], nonParsedVariable, true)
                             data[i] = data[i].concat(parsedHeaderVariable)
                             // data[i] = this.assembleHangul(data[i])
-                           //  console.log(`2함수결과:`)
-                           //  console.log(parsedHeaderVariable.length)
+                            //  console.log(`2함수결과:`)
+                            //  console.log(parsedHeaderVariable.length)
                             if(parsedHeaderVariable.length == 0)
                                 throw new Error (`${varName} 변수를 찾을 수 없습니다. 또는 변수 내부 길이가 0입니다.`)
                         }else{
