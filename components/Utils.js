@@ -37,7 +37,7 @@ const Utils = {
 
             // isString이 참이면 글자 전체 위치 추가
             else {
-                let adding = Array.from(Array(search.length).keys()).map(x => x+i);
+                let adding = Array.from(Array(search.length).keys()).map(x => x+i); // [i, i+1, ... i+l-1]
                 indexes = indexes.concat(adding);
             }
             i = message.indexOf(search, ++i)
@@ -52,7 +52,7 @@ const Utils = {
 
     // 단어 -> 낱자로 분리하는 함수. 매크로를 이용한 처리
     // 수정 - 매크로 ., !, +, ?
-    // . 이스케이프 문자.
+    // . 이스케이프 문자. .? -> ?기호 사용, .. -> .기호, .+ -> +기호 입력
     // 바! -> [바, 뱌, 빠,... ].
     // 바? -> 한글 ? 개수까지 완전 무시...
     // 바+ -> [바, 박, 밖,...]. 받침 포함.
@@ -64,7 +64,7 @@ const Utils = {
             if ((i===1 || i>1 && word[i-2]!== "." )&& word[i-1] === ".") {
                 wordArray.splice(-1, 1, word[i])
             }
-            // .뒤에 오지 않는 경우 ? 기호는 뒷 문자에 밀너허기
+            // .뒤에 오지 않는 경우 ? 기호는 뒷 문자에 붙여서 밀어넣기
             else if (word[i] === "?") {
                 wordArray.splice(-1, 1, wordArray.slice(-1)[0]+word[i])
             }
@@ -140,7 +140,6 @@ const Utils = {
                 sortedMap[key] = inputMap[key]
             })
         }
-
         return sortedMap
     },
 
@@ -278,8 +277,23 @@ const Utils = {
         return Utils.objectIn([var1, var2], compareList);
     },
 
-    // 파싱하기 {씨:{value:시, index:[1]}, 브얼:{value:벌, index:[2]}}
-    // => {messageList: 씨브얼, messageIndex: [1,2], parsedMessage: 시벌}
+    // 겹자모 리스트 -> 겹자모로 바꾸어 출력
+    makeDouble(var1, var2) {
+        if (Utils.isDouble(var1, var2) || (['ㄱ', 'ㄷ', 'ㅂ', 'ㅅ', 'ㅈ'].indexOf(var1)>-1 && var1 === var2)) {
+            for (let key in HO.doubleMap) {
+                if (Utils.objectEqual(HO.doubleMap[key], [var1, var2])) {
+                    return key;
+                }
+            }
+        }
+        else {
+            return null
+        }
+    },
+
+    // 파싱하기 {씨:{value:시, index:[0]}, 브얼:{value:벌, index:[1]}}
+    // 매핑형식 - 키: 어구, {value: 해석된 어구
+    // => {messageList: 씨브얼, messageIndex: [0,1], parsedMessage: ['시', '벌']}
     // 맵 형식 - qwertyToDubeol map, antispoof map, dropDouble map을 입력으로 한다.
     parseMap: (map) => {
         let originalMessageList = [];
@@ -333,7 +347,7 @@ const Utils = {
     msgToMap: (msg) => {
         const msgSplit = msg.split('');
         let res = {}
-        for(var ind in msgSplit) {
+        for(let ind in msgSplit) {
             if (!res[msgSplit[ind]]) {
                 res[msgSplit[ind]] = {value: msgSplit[ind], index: [parseInt(ind)]}
             }
@@ -342,13 +356,14 @@ const Utils = {
             }
         }
         return res;
-
     },
 
-    // 영자조합 만들기
+    // 한글, 영자 혼합시에 한글 낱자로 분리한 뒤에 조합하기
+    // isMap이 false이면 문자열만 출력 -> gksrmf -> 한글
+    // isMap이 true이면 맵 형식으로 출력 -> gksrmf -> {gks: {value:한, index:[0]}, rmf: {value:글, index:[3]}}
     qwertyToDubeol: (msg, isMap = false)=> {
+        //
         const mapping = Utils.enKoKeyMapping;
-
         const qwertyToDubeolMacro = (letter) =>  (Object.keys(mapping).indexOf(letter)!==-1 ? mapping[letter] : letter)
 
         // 맵을 만들 필요 없을 때
@@ -362,20 +377,21 @@ const Utils = {
         }
         // 맵을 만들어야 할 때
         else {
-            let msgSplit = msg.split("");
-            let msgRes = []
-            let res = {}
-            let temp = ""; // 글씨 추가용
+            let msgSplit = msg.split(""); // 단어 낱자로 분리
+            let msgRes = []; // 결과
+            let res = {}; // 결과 맵핑
+            let temp = ""; // 추가할 글씨에
             // 자음이나 영어 자음에 대응되는 경우
             msgSplit.map( (letter, ind) => {
                 let consonant = [...Utils.charInitials, "q", "w", "e", "r", "t", "a", "s", "d", "f", "g", "z", "x", "c", "v"];
-                let vowel = [...Utils.charMedials, "q", "w", "e", "r", "t", "a", "s", "d", "f", "g", "z", "x", "c", "v"];
+                let vowel = [...Utils.charMedials, "y", "u", "i", "o", "p", "h", "j", "k", "l", "b", "n", "m"];
 
+                //
                 let resMacro = (letter, val=temp) => {
                     if (val!=="") {
                         msgRes.push(val);
-                        if (!res[val]) res[val] = {value: Utils.qwertyToDubeol(val), index: [ind - val.length]}
-                        else { res[val].index.push(ind - val.length);}
+                        if (!res[val]) res[val] = {value: Utils.qwertyToDubeol(val), index: [ind-val.length]}
+                        else { res[val].index.push(ind-val.length);}
                         temp = letter;
                     }
                 }
@@ -432,6 +448,8 @@ const Utils = {
     },
 
     //자모조합을 악용한 비속어 걸러내기 ㄱH^H77| 검출 가능. isMap 사용시 오브젝트 형태로 결과물 도출.
+    // isMap이 거짓일 때 : ㄱH^H77| -> 개색기
+    // isMap이 참일 때: ㄱH^H77ㅣ -> {ㄱH: {value:개, index: [0]}, ^H7: {value: 색, index:[2]}, 7ㅣ: {value:기, index:[5]}}
     antispoof: (msg, isMap = false) => {
 
         const korConsonant = /[ㄱ-ㅎ]/;
@@ -440,16 +458,7 @@ const Utils = {
         // const singleParts = Object.keys(Utils.singlePronounce);
         const simConsonant = Object.keys(Utils.similarConsonant);
         const simVowel = Object.keys(Utils.similarVowel);
-        // 둘 다 들어간 요소
-        /* let commonList = [];
-         for (var lets of singleParts) {
-             if (singleAlphabet.indexOf(lets)!==-1) {
-                 commonList.push(lets)
-             }
-         }
-         */
-        // let letterType ='';
-        // let newLetterType='';
+
         const msgAlphabet = msg.split(""); // 낱자별로 나누어 처리하기
         let msgAlphabetType = []; //타입별로 나누기
 
@@ -634,10 +643,12 @@ const Utils = {
         // if (isMap) console.log('음절단위 분리 원래 메시지', preSyllableOrigin);
 
         // 결과값
-        let res = "";
-        let resObj = {};
+        let res = ""; // 문자열 기록
+        let resObj = {}; // isMap이 참일 때는 resObj도 기록
 
         for (i=0; i<preSyllable.length; i++) {
+
+            res += Hangul.assemble(Hangul.disassemble(preSyllable[i])); // isMap 여부와 무관하게 res 기록
             if (isMap) {
                 // 키값이 있으면 인덱스만 추가
                 if (Object.keys(resObj).indexOf(preSyllableOrigin[i])!== -1) {
@@ -647,11 +658,85 @@ const Utils = {
                     resObj[preSyllableOrigin[i]] = {value: Hangul.assemble(Hangul.disassemble(preSyllable[i])), index:[preIndex[i]] };
                 }
             }
-            else {
-                res += Hangul.assemble(Hangul.disassemble(preSyllable[i]));
-            }
         }
 
+        // 마지막으로 자음/모음 정리하기 ㄱ기 -> 끼, 기ㅏ-> 갸 등
+        // 낱자별로 분해
+        let resList = Hangul.disassemble(res, true);
+        let minSize = Math.min(...resList.map(x=> x.length));
+        // 낱자음/낱모음이 있을 때
+        let resList2 = [] // 낱자음 낱모음을 붙여서
+        let joinKey = {} // 낱자 붙일 키 모음
+        let preKey='';
+        let postKey='' // 낱자 붙일 키 변수
+        let skipElement = false; // 넘길지 테스트
+        // 단자음, 단모음이 있을 경우
+        if (minSize == 1) {
+            // 낱자에 대해서 분석
+            for (let ind in resList) {
+                // 자음+같은자음+낱자
+                if (ind<resList.length-1 && resList[ind].length ===1 && ['ㄱ', 'ㄷ', 'ㅂ', 'ㅅ', 'ㅈ'].indexOf(resList[ind][0]) >-1 && resList[ind][0] == resList[parseInt(ind)+1][0]) {
+                    resList2.push([Utils.makeDouble(resList[ind][0], resList[ind][0]), ...resList[parseInt(ind)+1].slice(1)]);
+                    skipElement = true;
+                    if (isMap) {
+                        for (let key in resObj) {
+                            console.log(key, resObj[key].value, resList[ind], resList[parseInt(ind)+1])
+                            if (resObj[key].value === Hangul.assemble(resList[ind])) {
+                                preKey = key;
+                                console.log(preKey)
+                            }
+                            else if (resObj[key].value == Hangul.assemble(resList[parseInt(ind)+1])) {
+                                postKey = key;
+                                console.log(postKey, 'ENDDDD')
+                            }
+                        }
+                        joinKey[resList2.length-1] = [preKey, postKey];
+                    }
+                }
+                // 뒷자음이 앞음절과 겹자음 받침 형성 가능할 때 또는 뒷모음이 앞음절과 겹모음 형성 가능할 때
+                else if (
+                    ind<resList.length-1 && resList[parseInt(ind)+1].length ===1 && ObjectOperation.objectIn([resList[ind][resList[ind].length-1], resList[parseInt(ind)+1][0]], Utils.listUnion(HO.doubleConsonant, HO.doubleVowel))
+                ) {
+                    resList2.push([...resList[ind].slice(0,-1), Utils.makeDouble(resList[ind][resList[ind].length-1], resList[parseInt(ind)+1][0])])
+                    skipElement = true;
+                    if (isMap) {
+                        for (let key in resObj) {
+                            if (resObj[key].value === Hangul.assemble(resList[ind])) {
+                                preKey = key;
+                            }
+                            else if (resObj[key].value === Hangul.assemble(resList[parseInt(ind)+1])) {
+                                postKey = key;
+                            }
+                        }
+                        joinKey[resList2.length-1] = [preKey, postKey];
+                    }
+                }
+                // 나머지
+                else {
+                    if (!skipElement) {
+                        resList2.push(resList[ind]);
+                    }
+                    skipElement = false;
+                }
+            }
+            if (!isMap) {
+                // console.log(resList2)
+                res = resList2.map(x=> Hangul.assemble(x)).join('')
+                // console.log(res)
+            }
+            else {
+                for (let keyNum in joinKey) {
+                    console.log(keyNum, joinKey[keyNum])
+                    preKey = joinKey[keyNum][0]
+                    postKey = joinKey[keyNum][1]
+                    resObj[preKey+postKey] = {value: Hangul.assemble(resList2[keyNum]), index: resObj[preKey].index}
+                    delete resObj[preKey]
+                    delete resObj[postKey]
+                }
+            }
+
+
+        }
         return isMap ? resObj : res;
     },
 
@@ -1105,6 +1190,11 @@ const Utils = {
         else {
             return {val:false, pos:[], txt:[]};
         }
+    },
+
+    // 영어발음 -> 한글로 치환하기.
+    romanToHangul(msg, isMap =false) {
+
     }
 }
 
