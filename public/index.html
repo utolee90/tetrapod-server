@@ -65,12 +65,14 @@
       <pre>사용 방법 - URL 뒤에 다음과 같은 파라미터를 추가히시면 됩니다. (localhost:3000/find?sentence=예제&
         sentence=(입력문장)
         multiple=(중복검사 여부)
-        korEng=(한영자판 혼합 입력시 한글 변환후 검사)
-        stronger=()
+        qwerty=(한영자판 혼합 입력시 한글 변환후 검사)
+        antispoof=(한글자모와 유사한 기호들을 한글자모로 바꾼 뒤 검사)
+        pronounce=(로마자로 표시된 한글음을 한글로 바꾼 후 검사)
+        dropdouble=('가아아' 처럼 같은 모음으로 늘어진 음을 압축한 뒤 검사하는 것 추가)
       </pre>
       <pre>출력 결과 - 다음과 같은 JSON 데이터로 출력됩니다.
-        {
-        }
+        입력: /find?sentence=라알지하지%20마라&dropdouble=1
+        결과 : {"message":"라알지하지 마라","found":[],"position":[],"doubleEnd":[],"doubleEndPosition":[],"ddMessage":"랄지하지 마라","ddFound":["라알지"],"ddPosition":[[0,1,2]],"ddsMessage":"랄지하지 마라","ddsFound":["라알지"],"ddsPosition":[[0,1,2]]}
       </pre>
     </div>
     <div class="content-api api-5">
@@ -79,15 +81,29 @@
       <pre>사용 방법 - URL 뒤에 다음과 같은 파라마터를 추가하시면 됩니다.(localhost:3000/find?sentence=예제&...
         sentence=(입력문장)
         replace=(결자처리할 문자)
-        korEng=(한영자판 혼합 입렧시 한글 변환 후 검사)
-        dropDouble=(쌍자음)
-        antispoof=(유사자모를 혼합하는 것도 변환할지 여부)
-        fixVulgar=(저속한 표현도 결자처리할지 여부)
-        isOriginal=()
+        qwerty=(한영자판 혼합 입력시 한글 변환후 검사)
+        antispoof=(한글자모와 유사한 기호들을 한글자모로 바꾼 뒤 검사)
+        pronounce=(로마자로 표시된 한글음을 한글로 바꾼 후 검사)
+        dropdouble=('가아아' 처럼 같은 모음으로 늘어진 음을 압축한 뒤 검사하는 것 추가)
       </pre>
       <pre>출력 결과 - 비속어가 결자로 가려진 형태로 출력됩니다.
         입력 : /replace?sentence=씨발%20너무%20나쁘네
         출럭 : ** 너무 나쁘네
+      </pre>
+    </div>
+    <div class="content-api api-6">
+      <div class="sub-title"><span class="emphasis">GET</span> - /count</div>
+      <p>문장 입력 시에 비속어의 갯수를 계산합니다.</p>
+      <pre>사용 방법 - URL 뒤에 다음과 같은 파라마터를 추가하시면 됩니다.(localhost:3000/find?sentence=예제&...
+        sentence=(입력문장)
+        qwerty=(한영자판 혼합 입력시 한글 변환후 검사)
+        antispoof=(한글자모와 유사한 기호들을 한글자모로 바꾼 뒤 검사)
+        pronounce=(로마자로 표시된 한글음을 한글로 바꾼 후 검사)
+        dropdouble=('가아아' 처럼 같은 모음으로 늘어진 음을 압축한 뒤 검사하는 것 추가)
+      </pre>
+      <pre>출력 결과 - 다음과 같은 JSON 데이터로 출력됩니다.
+        입력: /count?sentence=라알지하지%20마라&dropdouble=1
+        출력 결과 : {"bad":0,"end":0,"ddBad":1,"ddsBad":1}
       </pre>
     </div>
   </div>

@@ -3,6 +3,7 @@
 const ObjectOperation = {
 
     // 배열/오브젝트 동일성 체크. 기능 확장.
+    // 주의! 숫자, 문자열, 불리안만 원소로 구성된 리스트, 오브젝트만 비교 가능합니다. (함수 등의 원소는 비교 불가능)
     objectEqual: (a,b) => {
         if (typeof a !== typeof b) {
             return false;
@@ -10,12 +11,18 @@ const ObjectOperation = {
         else {
             if (typeof a === "string" || typeof a === "number" || typeof a === "boolean")
                 return (a===b);
+            // 타입이 달라도 패스
+            else if (Array.isArray(a) !== Array.isArray(b)) {
+                return false;
+            }
+            // 길이가 달라도 pass
             else if (Object.keys(a).length !== Object.keys(b).length ) {
                 return false;
             }
+            // 나머지 경우 - 원소 by 원소로 비교한다.
             else {
-                for (var key in a) { // a의 키에 대해 조사
-                    if (a[key]!==b[key]) {return false;}
+                for (let key in a) { // a의 키에 대해 조사. objectEqual로 동일 여부 비교
+                    if (!b[key] || !ObjectOperation.objectEqual(a[key], b[key]) ) return false;
                 }
             }
             return true;
@@ -25,23 +32,24 @@ const ObjectOperation = {
 
     // 배열/오브젝트의 포함관계 체크. obj(a, b)에서  a가 b안에 들어갈 때 True
     objectInclude: (inc, exc, order=false) => {
-        let val = true;
+
         // 순서 생각하지 않고 포함관계
         if ( Array.isArray(inc) && Array.isArray(exc)) {
             if ( !order ) {
                 // inc 안의 원소들에 대해서 exc안에 포함하기만 하면 OK
-                for (var x of inc) {
+                for (let x of inc) {
                     if (!ObjectOperation.objectIn(x, exc))
-                    {val = false; break;}
+                    {return false;}
                 }
-
+                // return false가 아니면 return true;
+                return true;
             }
             // 순서 생각할 때에는 좀 다르게 전략을 짜보자. 우선
             else {
                 // 임시 숫자
                 let tempCnt =0; // 탈출하는 순간 false
                 let tempVal = false;
-                for (var incCnt=0; incCnt<inc.length; incCnt++) {
+                for (let incCnt=0; incCnt<inc.length; incCnt++) {
                     while(tempCnt<exc.length) {
                         if (inc[incCnt] === exc[tempCnt]) {
                             tempVal = true;
@@ -56,19 +64,20 @@ const ObjectOperation = {
                         break;
                     }
                 }
-                val = tempVal
+                return tempVal;
             }
 
         }
 
-        return val;
+        // 위의 작업 실행 못하면 거짓 출력.
+        return false;
 
     },
 
-    //중복 리스트 제거
+    //리스트 안에 중복 원소 제거
     removeMultiple: (list) => {
         let res = [];
-        for (var x of list) {
+        for (let x of list) {
             if (!ObjectOperation.objectIn(x, res)) res.push(x);
         }
         return res;
@@ -118,6 +127,35 @@ const ObjectOperation = {
         }
     },
 
+    // 리스트 그냥 더하기. 원소 형태는 모두 같아야 한다. [[1,2,3],[2,4,5]]=> [1,2,3,2,4,5]
+    addList: (...list) => {
+        // 숫자
+        if (typeof list[0] === 'number') {
+            let res =0;
+            for (var x of list) {
+                res += Number(x);
+            }
+            return res;
+        }
+        // 문자
+        else if (typeof list[0] === 'string') {
+            let res ='';
+            for (var x of list) {
+                res += x;
+            }
+            return res;
+        }
+        // 리스트
+        else if (Array.isArray(list[0])) {
+            let res = [];
+            for (var x of list) {
+                res = res.concat(x);
+            }
+            return res
+        }
+
+    },
+
     // 리스트를 곱하기. 예시  [[1,2,3],[4,5,6]] => [[1,4], [1,5], [1,6], [2,4], [2,5], [2,6], [3,4], [3,5], [3,6]]
     productList : (list) => {
         if (Array.isArray(list)) {
@@ -130,8 +168,8 @@ const ObjectOperation = {
             }
             else if (list.length ===2 ) {
                 let res = [];
-                for (var fele of list[0]) {
-                    for (var sele of list[1]) {
+                for (let fele of list[0]) {
+                    for (let sele of list[1]) {
                         res.push([fele, sele]);
                     }
                 }
@@ -142,7 +180,9 @@ const ObjectOperation = {
                 let res0 = ObjectOperation.productList(list.slice(0,-1));
                 if (res0.length ===0 || list.slice(-1)[0].length===0) return [];
                 else {
+                    let fele;
                     for (fele of res0) {
+                        let sele;
                         for (sele of list.slice(-1)[0]) {
                             res.push([...fele, sele]);
                         }
@@ -159,14 +199,13 @@ const ObjectOperation = {
 
     // 포함관계 정리 - elem이 object 안에 있는지 확인
     objectIn : (elem, object) => {
-
         // 우선 elem 파악
         if (typeof object === "object") {
             if (typeof elem === "string" || typeof elem ==="number" || typeof elem ==="boolean") {
                 return Object.values(object).indexOf(elem)!==-1;
             }
             else if (typeof elem === "object") {
-                for (var x in object) {
+                for (let x in object) {
                     if (ObjectOperation.objectEqual(object[x], elem)) return true;
                 }
                 return false;
@@ -174,18 +213,17 @@ const ObjectOperation = {
             else return false;
         }
         else return false;
-
     },
 
     // 리스트 합집합 구하기. 리스트 원소가 일반이면 그냥 더하기, 오브젝트면 원소들을 union 하기
     listUnion : (...list) => {
         let res = []
-        for (var x of list) {
+        for (let x of list) {
             if (typeof x ==="string" || typeof x ==="number" || typeof x ==="boolean") {
                 if (!ObjectOperation.objectIn(x, res )) res.push(x)
             }
             else if (typeof x === "object") {
-                for (var y in x) {
+                for (let y in x) {
                     if (!ObjectOperation.objectIn(x[y], res)) res.push(x[y])
                 }
             }
@@ -196,9 +234,9 @@ const ObjectOperation = {
     listIntersection: (...list) => {
         let res = [];
         if (list.length>0) {
-            for (var y in list[0]) {
+            for (let y in list[0]) {
                 let tmpRes = true;
-                for (var x of list) {
+                for (let x of list) {
                     tmpRes = tmpRes && ObjectOperation.objectIn(list[0][y], x)
                 }
                 if (tmpRes) res.push(list[0][y])
@@ -206,9 +244,7 @@ const ObjectOperation = {
             return res;
         }
         else return [];
-
     },
-
 };
 
 module.exports =  ObjectOperation;
