@@ -75,18 +75,28 @@ const Utils = {
     // 바! -> [바, 뱌, 빠,... ] -유사 문자까지 모두 포함
     // 바+ -> [바, 박, 밖,...]. 받침 또는 중복자음 포함. 고 -> [괴, 괘, 공]
     // wordToarray -> 바?꾸 -> ['바?', '꾸']
+    // 20220720 이스케이프 문자 ^, $ 추가.
     wordToArray: word => {
         let wordArray = []; // 결과 출력
         let tmp = ''; // 문자 임시 변수
+        let startMacro = false; // 시작매크로 ^감지
         for (let i = 0; i <= word.length - 1; i++) {
             // tmp 입력 문자가 없을 때
             if (tmp === "") {
                 // 이스케이프 문자., 한글 낱자, 초성일 때는 입력 대기
                 if (/^[.가-힣]$/.test(word[i]) || HO.charInitials.indexOf(word[i])>-1) {
                     tmp = word[i];
+                    if (tmp === '.' && startMacro) {
+                        startMacro = false; //startMacro가 켜져있을 때 .가 들어오면 강제로 끔.
+                    }
+                }
+                // 맨 처음에 오는 ^ 감지.
+                else if (i===0 && word[i]==='^') {
+                    startMacro = true; // 시작매크로 감지
                 }
                 else {
                     wordArray.push(word[i]);
+                    startMacro = false; //밀어넣는 순간 startMacro 꺼버리기
                 }
             }
             // 이스케이프 문자 . -> 뒤에 아무 문자가 오면 그 문자 입력
@@ -100,22 +110,27 @@ const Utils = {
                 if (/^[가-힣]$/.test(Hangul.assemble(tmp.split('').concat(word[i])))) {
                     tmp =  Hangul.assemble(tmp.split('').concat(word[i]));
                 }
-                // tmp가 한글 낱자인데 뒤에 ! 혹은 + 조합 -> 같이 출력
-                else if (/^[가-힣]$/.test(Hangul.assemble(tmp.split(''))) && ['!', '+'].indexOf(word[i])>-1) {
-                    wordArray.push(tmp+word[i]); tmp = '';
+                // tmp가 한글 낱자인데 뒤에 ! 혹은 + 조합, 아니면 맨 마지막 글자에 $ 기호 -> 같이 출력
+                else if (/^[가-힣]$/.test(Hangul.assemble(tmp.split(''))) && (['!', '+'].indexOf(word[i])>-1 || i===word.length-1 && word[i] === '$')) {
+                    wordArray.push(startMacro?"^"+tmp+word[i]:tmp+word[i]);
+                    tmp = '';
+                    startMacro = false;
                 }
                 // 한글 문자가 있는데 다른게 들어올 때 -> 한글 출력 후 tmp 변경. 단 ,가 들어오면 삭제
                 else if (/^[가-힣]$/.test(Hangul.assemble(tmp.split('')))) {
-                    wordArray.push(tmp);
+                    wordArray.push(startMacro?"^"+tmp:tmp);
                     tmp = word[i]===','? '':word[i];
+                    startMacro = false;
                 }
                 // tmp가 비어있지 않은데 ,가 들어옴 -> tmp를 비우고 wordArray에 밀어넣음.
                 else if (word[i]===','){
-                    wordArray.push(tmp); tmp = '';
+                    wordArray.push(startMacro?"^"+tmp:tmp); tmp = '';
+                    startMacro= false;
                 }
                 else {
                     wordArray.push(tmp); // tmp 밀어넣기
                     tmp = word[i];
+                    startMacro = false;
                 }
             }
 
@@ -232,34 +247,38 @@ const Utils = {
     // [[1,2],[3,4,5]] -> [13,14,15,23,24,25]
     recursiveComponent: (data) => {
 
+
         // 배열 정의되지 않은 것은 그대로 출력
         if (typeof data !== "object") return data
         else {
+            // 오류 방지를 위해 deep-copy해서 처리하자.
+            let newData = JSON.parse(JSON.stringify(data))
+
             // 데이터의 모든 항 순회
-            for (let i=0;i<data.length;i++){
+            for (let i=0;i<newData.length;i++){
 
                 // 데이터 원소 내부의 모든 항목을 순회합니다.
-                for(let itemIndex in data[i]){
-                    let item = data[i][itemIndex]
+                for(let itemIndex in newData[i]){
+                    let item = newData[i][itemIndex]
 
                     // 데이터 항목이 배열인 경우
                     // 재귀 컴포넌트 해석을 진행합니다.
                     if(Array.isArray(item)){
                         let solvedData = Utils.recursiveComponent(item)
-                        data[i][itemIndex] = null
-                        data[i] = data[i].concat(solvedData)
+                        newData[i][itemIndex] = null
+                        newData[i] = newData[i].concat(solvedData)
                     }
                 }
             }
 
             // 그 다음에 null 원소는 모두 제거하기
-            for (let i=0; i<data.length; i++) {
-                data[i] = data[i].filter(x => x !==null );
+            for (let i=0; i<newData.length; i++) {
+                newData[i] = newData[i].filter(x => x !==null );
             }
 
             // 데이터 리스트 곱 연산 수행 후 붙여쓰기
             // [[1,2],[3,4,5]] = [[1,3],[1,4],[1,5],[2,3],[2,4],[2,5]]-> [13, 14, 15, 23, 24, 25]
-            let presolvedData = ObjectOperation.productList(data)
+            let presolvedData = ObjectOperation.productList(newData)
             let solvedData = presolvedData.map(x=> x.join(""))
 
             return solvedData
@@ -273,17 +292,18 @@ const Utils = {
         let cont = Hangul.disassemble(msg, true); // 한글 키별로 낱자 분리
 
         let res = []
+        let idx, part;
         for (let letterList of cont) {
             switch(cond) {
                 // 키보드 기준. Hangul.disassemble과 동일하게 처리
                 case 'key':
-                case 'type':{
+                case 'type': {
                     res.push(letterList);
                     break;
                 }
-                case 'part':{
-                    let idx = 0;
-                    let part = letterList;
+                case 'part': {
+                    idx = 0;
+                    part = letterList;
                     // 복자음 및 복받침 합치기
                     while (idx<part.length) {
                         if (idx<part.length-1 && Utils.objectIn([part[idx], part[idx+1]], Object.values(HO.doubleMap))) {
@@ -300,16 +320,15 @@ const Utils = {
                     break;
                 }
                 case 'sound': {
-                    let idx = 1; // 초성은 쌍자음도 음단위로 나누지 않으므로 일단 무시
-                    let part = letterList;
+                    idx = 1; // 초성은 쌍자음도 음단위로 나누지 않으므로 일단 무시
+                    part = letterList;
                     // 나누기
-                    while(idx<part.length) {
-                        if (Object.keys(HO.doubleMap).indexOf(part[idx])>-1) {
+                    while (idx < part.length) {
+                        if (Object.keys(HO.doubleMap).indexOf(part[idx]) > -1) {
                             let kv = HO.doubleMap[part[idx]];
                             part.splice(idx, 1, kv[0], kv[1]);
-                            idx +=2;
-                        }
-                        else {
+                            idx += 2;
+                        } else {
                             idx++;
                         }
                     }
@@ -837,11 +856,12 @@ const Utils = {
             'ㅖ':'ㅖ', 'ㅗ':'ㅛ', 'ㅛ':'ㅛ', 'ㅜ':'ㅠ', 'ㅠ':'ㅠ', 'ㅡ':'ㅠ', 'ㅣ':'ㅣ' } // 이어 -> 여 단축을 위한 작업
 
         // 유사모음 축약형으로 잡아내기 위한 조건 갸앙 ->걍
-        const vowelLast = {'ㅏ':['ㅏ'], 'ㅐ':['ㅐ', 'ㅔ'], 'ㅑ': ['ㅏ', 'ㅑ'], 'ㅒ':['ㅐ', 'ㅔ', 'ㅒ', 'ㅖ'],
-            'ㅓ' : ['ㅓ'], 'ㅔ': ['ㅔ', 'ㅐ'], 'ㅕ': ['ㅓ', 'ㅕ'], 'ㅖ':['ㅐ', 'ㅔ', 'ㅒ', 'ㅖ'],
-            'ㅗ':['ㅗ'], 'ㅘ': ['ㅏ', 'ㅘ'], 'ㅙ': ['ㅐ', 'ㅔ', 'ㅙ','ㅚ'], 'ㅚ': ['ㅚ'], 'ㅛ':['ㅛ', 'ㅗ'],
-            'ㅜ':['ㅜ', 'ㅡ'], 'ㅝ':['ㅓ', 'ㅝ'], 'ㅞ': ['ㅔ', 'ㅞ'], 'ㅟ': ['ㅟ', 'ㅣ'],
-            'ㅠ':['ㅠ', 'ㅜ', 'ㅡ'], 'ㅡ':['ㅡ'], 'ㅢ': ['ㅢ', 'ㅣ'], 'ㅣ':['ㅣ']}
+        // 수정 -> 겨여 -> 두번째에 ㅣ가 끼어 있어서 합치지 못한다.
+        const vowelLast = {'ㅏ':['ㅏ'], 'ㅐ':['ㅐ', 'ㅔ'], 'ㅑ': ['ㅏ'], 'ㅒ':['ㅐ', 'ㅔ'],
+            'ㅓ' : ['ㅓ'], 'ㅔ': ['ㅔ', 'ㅐ'], 'ㅕ': ['ㅓ'], 'ㅖ':['ㅐ', 'ㅔ'],
+            'ㅗ':['ㅗ'], 'ㅘ': ['ㅏ'], 'ㅙ': ['ㅐ', 'ㅔ','ㅚ'], 'ㅚ': ['ㅚ'], 'ㅛ':['ㅗ'],
+            'ㅜ':['ㅜ', 'ㅡ'], 'ㅝ':['ㅓ'], 'ㅞ': ['ㅔ', 'H'], 'ㅟ': ['ㅟ', 'ㅣ'],
+            'ㅠ':['ㅜ', 'ㅡ'], 'ㅡ':['ㅡ'], 'ㅢ': ['ㅢ', 'ㅣ'], 'ㅣ':['ㅣ']}
 
         // 중복모음 결과 유도. (앞모음+ㅇ+뒷모음 합병 가능여부)
         const doubleVowelResult = (a, b) => {
@@ -860,7 +880,6 @@ const Utils = {
             else if (Utils.objectIn([a,b], [['ㅜ', 'ㅔ'], ['ㅜ', 'ㅞ']])) { return 'ㅞ'; }
             else if (Utils.objectIn([a,b], [['ㅜ', 'ㅣ'], ['ㅜ', 'ㅟ']])) { return 'ㅟ';}
             else { return '';}
-
         }
 
         // 낱자 char, nextChar 자모분해
@@ -868,6 +887,31 @@ const Utils = {
         let nextList = Array.isArray(nextChar)? nextChar: Utils.disassemble(nextChar);
         let curCjj = Array.isArray(char)? Utils.choJungJong(Hangul.assemble(char)) : Utils.choJungJong(char);
         let nextCjj = Array.isArray(nextChar)? Utils.choJungJong(Hangul.assemble(nextChar)): Utils.choJungJong(nextChar);
+
+        // Simplify일 때 선제치환
+        if (reduced && simplify) {
+            // simplify일 때에는 ㅢ -> ㅣ로 선제치환,
+            if (curList[1] =='ㅡ' && curList[2] == 'ㅣ') {
+                curList.splice(1,1); curCjj.jung = ['ㅣ'];
+            }
+            if (nextList[1]=='ㅡ' && nextList[2] == 'ㅣ') {
+                nextList.splice(1,1); nextCjj.jung = ['ㅣ']
+            }
+            const simplified = {'ㅑ': 'ㅏ', 'ㅒ': 'ㅐ', "ㅕ": 'ㅓ', 'ㅖ': 'ㅔ', 'ㅛ': 'ㅗ', 'ㅠ': 'ㅜ'};
+            // 치음 + 반모음 -> 치음 + 단모음
+            if (['ㄷ', 'ㅈ', 'ㅊ', 'ㅉ'].indexOf(curList[0]) >-1) {
+                if (Object.keys(simplified).indexOf(curList[1])>-1) {
+                    curList.splice(1,1, simplified[curList[1]]);
+                    curCjj.jung = [curList[1]]
+                }
+            }
+            if (['ㄷ', 'ㅈ', 'ㅊ', 'ㅉ'].indexOf(nextList[0]) >-1) {
+                if (Object.keys(simplified).indexOf(nextList[1])>-1) {
+                    nextList.splice(1,1, simplified[nextList[1]]);
+                    nextCjj.jung = [nextList[1]]
+                }
+            }
+        }
 
         let curCho = curList[0];
         let curJung = Hangul.assemble(curCjj.jung);
@@ -926,14 +970,44 @@ const Utils = {
         }
         // 나머지 -> 받침과 쌍자음이 가능한 경우만 찾아보자
         else {
+
             // 앞자음+뒷자음 -> 합칠 수 있는 경우
-            const consonantJoined = {'ㄱㄱ': 'ㄲ', 'ㄱㅋ':'ㅋ', 'ㄷㄷ': 'ㄸ', 'ㄷㄸ': 'ㄸ','ㄷㅅ': 'ㅆ', 'ㄷㅆ': 'ㅆ', 'ㄷㅈ': 'ㅉ', 'ㄷㅉ':'ㅉ',
-                'ㄷㅊ': 'ㅊ', 'ㄷㅌ':'ㅌ', 'ㅂㅂ': 'ㅃ', 'ㅂㅍ': 'ㅍ', 'ㅅㄷ': 'ㄸ', 'ㅅㄸ':'ㄸ', 'ㅅㅅ': 'ㅆ', 'ㅅㅈ': 'ㅉ', 'ㅅㅊ': 'ㅊ',
-                'ㅈㄷ': 'ㄸ', 'ㅈㅅ': 'ㅆ', 'ㅈㅆ': 'ㅆ', 'ㅈㅈ': 'ㅉ', 'ㅈㅉ': 'ㅉ', 'ㅈㅊ': 'ㅊ', 'ㅋㄱ': 'ㅋ', 'ㅋㅋ': 'ㅋ', 'ㅌㄷ': 'ㅌ', 'ㅌㅌ': 'ㅌ', 'ㅍㅂ': 'ㅍ',
-                'ㄲㄱ':'ㄱㄲ',  'ㅆㅅ': 'ㅅㅆ',  }
+            const consonantJoined = {
+                'ㄱㄱ': 'ㄲ',  'ㄱㅋ':'ㅋ',
+                'ㄷㄷ': 'ㄸ', 'ㄷㄸ': 'ㄸ','ㄷㅅ': 'ㅆ', 'ㄷㅆ': 'ㅆ', 'ㄷㅈ': 'ㅉ', 'ㄷㅉ':'ㅉ', 'ㄷㅊ': 'ㅊ', 'ㄷㅌ':'ㅌ',
+                'ㅂㅂ': 'ㅃ', 'ㅂㅍ': 'ㅍ', 'ㅂㅃ': 'ㅃ',
+                'ㅅㄷ': 'ㄸ', 'ㅅㄸ':'ㄸ', 'ㅅㅅ': 'ㅆ', 'ㅅㅈ': 'ㅉ', 'ㅅㅊ': 'ㅊ',
+                'ㅈㄷ': 'ㄸ', 'ㅈㅅ': 'ㅆ', 'ㅈㅆ': 'ㅆ', 'ㅈㅈ': 'ㅉ', 'ㅈㅉ': 'ㅉ', 'ㅈㅊ': 'ㅊ',
+                'ㅋㄱ': 'ㅋ', 'ㅋㅋ': 'ㅋ', 'ㅌㄷ': 'ㅌ', 'ㅌㅌ': 'ㅌ',
+                'ㅍㅂ': 'ㅍ', 'ㅍㅍ': 'ㅍ', 'ㅎㅎ': 'ㅌ',
+                'ㄲㄱ':'ㄱㄲ',  'ㅆㅅ': 'ㅅㅆ',
+                'ㄷㄴ':'ㄴㄴ', 'ㅅㄴ': 'ㄴㄴ', 'ㅆㄴ': 'ㄴㄴ', 'ㅈㄴ': 'ㄴㄴ', 'ㅊㄴ': 'ㄴㄴ', 'ㅌㄴ': 'ㄴㄴ', 'ㅎㄴ': 'ㄴㄴ'
+            }
+
+            // 앞자음+뒷자음  -> 복모음 한정 합치기. 빈 음절은 강제분리 못하게 조치 취하기
+            const doubleConsonantJoined = {...consonantJoined,
+                "ㄱㄲ": "ㄲ", // ㄺ 관련
+                "ㅁㅁ": 'ㅁ', // ㄻ 관련
+                "ㅅㄴ": null, 'ㅅㄷ': null, 'ㅅㄸ': null, 'ㅅㅅ': null,  // ㄳ, ㄽ, ㅄ 관련. 음절 분리 못하게 조치.
+                "ㅈㄴ": null,  // ㄵ 관련
+                "ㅌㄴ": null, //ㄾ 관련
+                "ㅎㄱ": "ㅋ", "ㅎㄴ": null, "ㅎㄷ": "ㅌ", "ㅎㅂ": "ㅍ",  "ㅎㅅ": "ㅆ", "ㅎㅈ": "ㅊ", "ㅎㅎ": null  // ㄶ, ㅀ
+            }
 
             let joined = curJongList[curJongList.length-1] + nextCho;
-            if (Object.keys(consonantJoined).indexOf(joined)>-1) {
+            // 겹반침인 경우
+            if (curJongList.length ===2) {
+                // 값이 있는 경우 - 재조합
+                if (doubleConsonantJoined[joined]) {
+                    let lastLetter = reduced? [doubleConsonantJoined[joined], ...nextList.slice(1)]: [curJongList[curJongList.length-1], ...nextList];
+                    res = [[curCho, curJung, curJongList[0]], lastLetter];
+                }
+                // 비어 있는 경우
+                else {
+                    res = [curList, nextList]; // 분리하지 않는다.
+                }
+            }
+            else if (Object.keys(consonantJoined).indexOf(joined)>-1) {
                 // 받침이 완전히 뒷자음에 붙어버리는 경우
                 if (consonantJoined[joined].length === 1) {
                     let lastLetter = reduced? [consonantJoined[joined], ...nextList.slice(1)]: [curJongList[curJongList.length-1], ...nextList];
@@ -962,11 +1036,11 @@ const Utils = {
             ...simplifyMid, 'ㅑ': 'ㅏ', 'ㅕ':'ㅓ', 'ㅛ': 'ㅗ', 'ㅠ': 'ㅜ'
         }
         const simplifyEnd = {
-            'ㄲ': 'ㄱ', 'ㄳ': 'ㄱ', 'ㄵ': 'ㄴ', 'ㄶ': 'ㄴ', 'ㄺ': 'ㄱ', 'ㄻ':'ㅁ', 'ㄼ': 'ㅂ', 'ㄽ': 'ㄹ', 'ㄾ': 'ㄷ', 'ㄿ':'ㅂ', 'ㅀ': 'ㄹ',
+            'ㄲ': 'ㄱ', 'ㄳ': 'ㄱ', 'ㄵ': 'ㄴ', 'ㄶ': 'ㄴ', 'ㄺ': 'ㄱ', 'ㄻ':'ㅁ', 'ㄼ': 'ㄹ', 'ㄽ': 'ㄹ', 'ㄾ': 'ㄹ', 'ㄿ':'ㅂ', 'ㅀ': 'ㄹ',
             'ㅄ': 'ㅂ', 'ㅆ': 'ㅅ', 'ㅈ': 'ㄷ', 'ㅊ': 'ㄷ', 'ㅋ': 'ㄱ', 'ㅌ': 'ㄷ', 'ㅍ': 'ㅂ', 'ㅎ': 'ㄷ'
         }
         // 받침 간단한 쌍자음으로 치환하기. reduced가 있을 때에만 확인인
-        if(reduced && simplify) {
+        if(reduced) {
             // 우선 복자음, 복모음을 하나로 합치기
             for (let idx in res) {
                 if (/[ㅏ-ㅣ]/.test(res[idx][2])) res[idx].splice(1,2, Hangul.assemble([res[idx][1], res[idx][2]]))
@@ -974,21 +1048,28 @@ const Utils = {
             }
             // 단모음/ 단자음화하기
             for (let idx in res) {
-                if (['ㄲ', 'ㄸ', 'ㅃ', 'ㅆ', 'ㅉ'].indexOf(res[idx][0])>-1) {
+                if (simplify && ['ㄲ', 'ㄸ', 'ㅃ', 'ㅆ', 'ㅉ'].indexOf(res[idx][0])>-1) {
                     res[idx][0] = simplifyInit[res[idx][0]];
                 }
-                if (HO.toothConsonant.indexOf(res[idx][0])>-1 && Object.keys(toothSimplifyMid).indexOf(res[idx][1])>-1) {
+                if (simplify && HO.toothConsonant.indexOf(res[idx][0])>-1 && Object.keys(toothSimplifyMid).indexOf(res[idx][1])>-1) {
                     res[idx][1] = toothSimplifyMid[res[idx][1]]
                 }
-                else if (Object.keys(simplifyMid).indexOf(res[idx][1])>-1) {
+                else if (simplify && Object.keys(simplifyMid).indexOf(res[idx][1])>-1) {
                     res[idx][1] = simplifyMid[res[idx][1]]
                 }
+                // 이중받침 단조화는 simplify 컨디션 없이도 처리하자.
                 if (res[idx].length ===3 && Object.keys(simplifyEnd).indexOf(res[idx][2])>-1) {
                     res[idx][2] = simplifyEnd[res[idx][2]];
                 }
             }
         }
 
+        // 최종작업 - 받침 ㄴ+초성 ㄹ 또는 받침ㄹ+초성ㄴ  -> 받침 ㄹ로 변환
+        if (reduced && res.length ===2 && ['ㄹㄴ', 'ㄴㄹ'].indexOf(res[0][2]+res[1][0])>-1 ) {
+            res[0][2] = 'ㄹ'; res[1][0] = 'ㄹ'
+        }
+
+        // 결과는 자모리스트를 한글로 조합해서 처리한다.
         return res.map(x=> Hangul.assemble(x));
 
     },
@@ -1025,7 +1106,7 @@ const Utils = {
 
                     let lastChar = msgSplit[idx-1][msgSplit[idx-1].length-1]; // msgSplit의 마지막 문자
                     let testRes = Utils.joinedSyllable(pre, letter, true, simplify); // 음절이 줄어들 수 있는 경우
-                    if (simplify && idx>msgSplit.length-3) {console.log(testRes)}
+
                     let testResXR = Utils.joinedSyllable(lastChar, letter, false); // 음절이 줄어들지 않게 부착하는 경우.
                     // 길이가 1일 때는 글자가 합쳐진 걸로 간주한다.
                     if (testRes.length ===1) {
