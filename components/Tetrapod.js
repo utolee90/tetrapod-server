@@ -47,6 +47,63 @@ class Tetrapod {
         this.dropDoubleCheck = false; // dropDouble로 축약화시킨 메시지도 검사하기 여부. 체크시 dd, dd+simplify된 메시지도 같이 검사.
     }
 
+    // 일부 Utils 함수는 독립적으로도 사용할 수 있어서 static 클래스 처리
+    // 문장 위치 바꾸기
+    static replaceAll = Utils.replaceAll;
+
+    // 문장에서 단어 위치 찾아주는 함수
+    static getPositionAll = Utils.getPositionAll;
+
+    // 단어를 낱자 리스트로 분리하는 함수
+    static wordToArray = Utils.wordToArray;
+
+    // 맵 정렬 함수
+    static sortMap = Utils.sortMap;
+
+    // 단어 리스트 정렬 함수
+    static parseFromList = Utils.parseFromList;
+
+    // 단어를 초중종성으로 분리하기. cond 값이 part면 단순초중성, key면 키보드 기준, sound면
+    static disassemble = Utils.disassemble;
+
+    // 한글 낱자 초중종 분리
+    static choJungJong = Utils.choJungJong;
+
+    // 메시지 심플하게 맵으로 바꾸기
+    static msgToMap = Utils.msgToMap;
+
+    // 한영변환 자판 혼합시에 한글 낱자로 모두 변환한 뒤에 조합
+    static qwertyToDubeol = Utils.qwertyToDubeol;
+
+    // 자음, 모음과 유사한 글자를 한글자모로 모두 변환한 뒤에 조합
+    static antispoof = Utils.antispoof;
+
+    // 로마자로 표시된 음을 한글로 치환한 후에 조합
+    static engToKo = Utils.engToKo;
+
+    // 이우 -> 유 등 합칠 수 있는 한글 음가를 단축해서 합치는 함수
+    static dropDouble = Utils.dropDouble;
+
+    // ㄳ, ㄺ,ㄻ,ㅄ 받침 과잉 사용하는 것 검출하는 함수
+    static tooMuchDoubleEnd = Utils.tooMuchDoubleEnd;
+
+    // 유사 낱자 검사
+    static isKindChar = Utils.isKindChar;
+
+    // 낱자 포함되는지 검사하는 함수
+    static isInChar = Utils.isInChar;
+
+    // 매크로 패턴 word가 다른 매크로 패턴 comp에 포함되는지 확인하는 함수
+    static wordIncludeType = Utils.wordIncludeType;
+
+    //
+    static wordInclude = Utils.wordInclude;
+
+    // 한글 자모로 분해된 문자열을 찾아서 한글을 조합하는 함수
+    static assembleHangul = Utils.assembleHangul;
+
+
+
 
     // 비속어 데이터, 정상단어 데이터 불러오기. 데이터 개별 수정은 복잡하므로 이 함수로만 수정할 예정.
     load(inputWordsObject /* 오브젝트 형식으로 호출 */, disableAutoParse = true) {
@@ -89,20 +146,20 @@ class Tetrapod {
         // preParsed ->
         if (!this.preParsed) {
             this.badWords = {
-                0: this.assembleHangul(this.recursiveList(this.originalBadWordsData.badWords, parsedMacros)),
-                1: this.assembleHangul(this.recursiveList(this.originalBadWordsData.badWordsOne, parsedMacros)),
-                2: this.assembleHangul(this.recursiveList(this.originalBadWordsData.badWordsTwo, parsedMacros)),
-                3: this.assembleHangul(this.recursiveList(this.originalBadWordsData.badWordsThree, parsedMacros)),
-                4: this.assembleHangul(this.recursiveList(this.originalBadWordsData.badWordsFour, parsedMacros))
+                0: Utils.assembleHangul(this.recursiveList(this.originalBadWordsData.badWords, parsedMacros)),
+                1: Utils.assembleHangul(this.recursiveList(this.originalBadWordsData.badWordsOne, parsedMacros)),
+                2: Utils.assembleHangul(this.recursiveList(this.originalBadWordsData.badWordsTwo, parsedMacros)),
+                3: Utils.assembleHangul(this.recursiveList(this.originalBadWordsData.badWordsThree, parsedMacros)),
+                4: Utils.assembleHangul(this.recursiveList(this.originalBadWordsData.badWordsFour, parsedMacros))
             };
             this.typeofBadWords = {
-                drug: this.assembleHangul(this.recursiveList(this.originalBadWordsData.drug, parsedMacros)), // 유형별 비속어 데이터 리스트로 풀기
-                insult: this.assembleHangul(this.recursiveList(this.originalBadWordsData.insult, parsedMacros)),
-                sexuality: this.assembleHangul(this.recursiveList(this.originalBadWordsData.sexuality, parsedMacros)),
-                violence: this.assembleHangul(this.recursiveList(this.originalBadWordsData.violence, parsedMacros)),
+                drug: Utils.assembleHangul(this.recursiveList(this.originalBadWordsData.drug, parsedMacros)), // 유형별 비속어 데이터 리스트로 풀기
+                insult: Utils.assembleHangul(this.recursiveList(this.originalBadWordsData.insult, parsedMacros)),
+                sexuality: Utils.assembleHangul(this.recursiveList(this.originalBadWordsData.sexuality, parsedMacros)),
+                violence: Utils.assembleHangul(this.recursiveList(this.originalBadWordsData.violence, parsedMacros)),
             };
-            this.normalWords = this.assembleHangul(this.recursiveList(this.originalNormalWordsData.dictionary, parsedMacros))
-            this.exceptWords = this.assembleHangul(this.recursiveList(this.originalNormalWordsData.exception, parsedMacros));
+            this.normalWords = Utils.assembleHangul(this.recursiveList(this.originalNormalWordsData.dictionary, parsedMacros))
+            this.exceptWords = Utils.assembleHangul(this.recursiveList(this.originalNormalWordsData.exception, parsedMacros));
 
             this.preParsed = true;
         }
@@ -199,10 +256,11 @@ class Tetrapod {
         this.exceptWords = Utils.sortMap(this.exceptWords);
 
         // normalWordsMap, exceptWordsMap 유도
-        for (var word of this.normalWords) {
+        let word
+        for (word of this.normalWords) {
             this.normalWordsMap[word] = true;
         }
-        for (var word of this.exceptWords) {
+        for (word of this.exceptWords) {
             this.exceptWordsMap[word] = true;
         }
 
@@ -636,7 +694,7 @@ class Tetrapod {
             originalMessageList = Utils.parseMap(message).messageList;
             originalMessage = Utils.parseMap(message).joinedMessage;
             // dropDouble일 때에는 바ㅂ오 ->밥오로 환원하기 위해 originalMessage를 한글 조합으로
-            originalMessage = isReassemble ? this.assembleHangul(originalMessage, false): originalMessage;
+            originalMessage = isReassemble ? Utils.assembleHangul(originalMessage, false): originalMessage;
             originalMessageSyllablePositions =  Utils.parseMap(message).messageIndex;
             newMessage = Utils.parseMap(message).joinedParsedMessage;
         }
@@ -644,7 +702,7 @@ class Tetrapod {
             newMessage = message;
         }
 
-        // 정상단어의 포지션을 찾습니다.
+        // 찾은 정상단어의 포지션을 찾습니다.
         // 형식 : [[1,2,3], [4,5,6],...]
         let normalWordPositions = this.findNormalWordPositions(newMessage, false)
 
@@ -654,7 +712,7 @@ class Tetrapod {
 
         // 단순 단어 리스트일 때 -> wordArray 사용
         if (Array.isArray(parsedWordsList) && typeof parsedWordsList[0] === "string") {
-            let parsedMapList = this.parseFromList(parsedWordsList);
+            let parsedMapList = Utils.parseFromList(parsedWordsList);
             parsedBadWords = parsedMapList[0];
             parsedWordsList = parsedMapList[1];
             if(Object.keys(parsedBadWordsMap).length ===0) {
@@ -665,7 +723,7 @@ class Tetrapod {
         }
         // 낱자로 구별된 리스트일 때
         else if (Array.isArray(parsedWordsList) && Array.isArray(parsedWordsList[0]) && typeof parsedWordsList[0][0]==="string") {
-            let parsedMapList = this.parseFromList(parsedWordsList.map(x=>x.join('')));
+            let parsedMapList = Utils.parseFromList(parsedWordsList.map(x=>x.join('')));
             parsedBadWords = parsedMapList[0];
             parsedWordsList = parsedMapList[1];
             if (Object.keys(parsedBadWordsMap).length ===0) {
@@ -725,13 +783,13 @@ class Tetrapod {
 
                     // parserCharacter가 !이면 유사문자를 활용하는 함수인 isKindChar 활용
                     if (parserCharacter==="!") {
-                        if (this.isKindChar(unsafeOneCharacter, badOneCharacter, nextCharacter)) {
+                        if (Utils.isKindChar(unsafeOneCharacter, badOneCharacter, nextCharacter)) {
                             findLetterPosition[badOneCharacter].push(Number(index)) // 하나만 수집하지 않고 문장에서 전부 수집한다.
                         }
                     }
                     // parserCharacter가 +이면 unsafeOneCharacter가 badOneCharacter의 자모를 모두 포함하는지 확인.
                     else if (parserCharacter === "+") {
-                        if ( this.isInChar(unsafeOneCharacter, badOneCharacter) ) {
+                        if ( Utils.isInChar(unsafeOneCharacter, badOneCharacter) ) {
                             findLetterPosition[badOneCharacter].push(Number(index)) // 하나만 수집하지 않고 문장에서 전부 수집한다.
                         }
                     }
@@ -752,7 +810,7 @@ class Tetrapod {
 
             // 단어 포지션 리스트 곱으로 수집한다.
             let positionVectorList = Object.values(findLetterPosition);
-            let possiblePositions = Utils.productList(positionVectorList);
+            let possiblePositions = Utils.productList(...positionVectorList);
 
             // badWord의 원래 포지션 찾기
             let badWordOriginalPositions = [];
@@ -769,7 +827,7 @@ class Tetrapod {
                 // 순서가 바뀌었는지도 체크해보자.
                 let isShuffled = false
 
-                // 정상단어와 체크. wordPosition이 정상단어 리스트 안에 들어가면 패스
+                // 정상단어와 체크. 비속어 wordPosition이 정상단어의 위치값에 완벽히 들어가면 넘어간다.
                 for (var normalList of normalWordPositions) {
                     if (Utils.objectInclude(tempBadWordPositions, normalList, false)) {
                         isNeedToPass = true; break;
@@ -944,33 +1002,6 @@ class Tetrapod {
         tooMuchDouble = (doubleEndPos.length* 3>= newMessage.length)
             ? { pos: doubleEndPos, txt: doubleEndTxt} : {pos: [], txt: []};
 
-        // // 결과 출력하기 전에 뒤의 단어가 앞의 단어의 비속어를 모두 포함하는지 체크. 포함되는 앞의 단어는 결과에서 제거.
-        // let delIndex = []; // 지울 인덱스 찾기
-        // for (var idx in foundBadWordPositions) {
-        //     let isSkip = false;
-        //     for (var jdx = Number(idx)+1; jdx < foundBadWordPositions.length; jdx++) {
-        //         if (Utils.objectInclude(foundBadWordPositions[idx], foundBadWordPositions[jdx], false)) {
-        //             delIndex.push(Number(idx));
-        //             isSkip = true;
-        //             break;
-        //         }
-        //     }
-        //     if (isSkip) continue;
-        // }
-        //
-        // // delIndex로 지정된 원소들 삭제
-        // let fix = 0; // 보정수치
-        // for (var idx in delIndex) {
-        //     foundBadWords.splice(Number(idx)-fix,1)
-        //     foundBadWordPositions.splice(Number(idx)-fix, 1)
-        //     if (isMap) {
-        //         originalFoundBadWords.splice(Number(idx)-fix, 1)
-        //         originalFoundBadWordPositions.splice(Number(idx)-fix, 1)
-        //     }
-        //     fix++; // splice될 때마다 각 리스트의 index는 1씩 줄어든다. 따라서 보정값도 1씩 늘려준다.
-        // }
-
-
         let isMapAdded = {};
         if (isMap) {
             isMapAdded = {
@@ -1037,7 +1068,7 @@ class Tetrapod {
                 if (positions.indexOf(parseInt(index)) !== -1) {
                     let curChar = fixedMessageList[index];
                     let preChar = index >0 ?fixedMessageList[Number(index)-1] : ''; // 앞 부분
-                    if (/[ㄱ-ㅎ]/.test(curChar[0]) && this.assembleHangul(preChar+curChar).length === (preChar+curChar).length) {
+                    if (/[ㄱ-ㅎ]/.test(curChar[0]) && Utils.assembleHangul(preChar+curChar).length === (preChar+curChar).length) {
                         fixedMessageList[index] = fixedMessageList[index].slice(1); // 자음으로 시작하면서 앞글자와 한글 조합시 길이가 보존되는 경우
                     }
                     fixedMessageList[index] = fixedMessageList[index].replace(/\S/g, replaceCharacter);
@@ -1063,50 +1094,42 @@ class Tetrapod {
     // 메시지에서 정상단어 위치 찾는 맵
     // isMap 형식일 경우 {정상단어: [[정상단어포지션1], [정상단어포지션2],...],... } 형식으로 출력
     // isMap 형식이 아니면 message에서 정상단어의 낱자의 위치 리스트 형식으로 출력.
-    // 선택자 !, +는 일단 무시하는 것으로.
-    findNormalWordPositions (message, isMap = true) {
-        let exceptNormalPosition = []
+    findNormalWordPositions (message, showMap = true) {
+        let exceptNormalPositions = {} // 단어별로 위치 찾기
 
-        // 우선 exceptNormalPosition 찾기
+        // 우선 단어별로 exceptNormalPosition 찾기
         for (let exceptWord of this.exceptWords) {
-            exceptNormalPosition = Utils.listUnion(exceptNormalPosition, Utils.getPositionAll(message, exceptWord))
+            exceptNormalPositions[exceptWord] = Utils.getPositionAll(message, exceptWord, true, true)
         }
-        // 숫자 정렬하기
-        exceptNormalPosition.sort((a,b)=>(a-b))
 
         let wordPositionMap = {}
 
         // 정상단어 포지션 찾기
         for (let normalWord of this.normalWords) {
-            let newNormalWord = normalWord.replace("!", "").replace("?", "")
-            let i = message.indexOf(newNormalWord), indexes = []
-            let tempList = [] // 저장용.
-            while(i !==-1) {
-                // 우선 단어 찾기
-                indexes.push(i)
-                for (var j =1; j<newNormalWord.length; j++) {
-                    indexes.push(i+j)
+            let normalWordInitPos = Utils.getPositionAll(message, normalWord, false); // 정상단어 초기 위치 찾기
+            let newNormalWordList = [];
+            for (let x in normalWordInitPos) {
+                let isIn = true;
+                let initPos = Number(normalWordInitPos[x]); //정상단어의 첫 시작 위치
+                let normalWordPos = Array.from(Array(normalWord.length).keys()).map(z => z+Number(initPos)); // 정상단어의 위치
+                for (let exceptWord in exceptNormalPositions) {
+                    let range = exceptNormalPositions[exceptWord]; //정상단어 예외처리 범위 리스트
+                    if (Utils.objectInclude(normalWordPos, range)) {
+                        isIn = false; break; // 찾은 정상단어가 특정 정상단어 예외단어의 인덱스 안에 들어가버리면 정상단어로 취급하지 않는다.
+                    }
                 }
-                // 포함되지 않을 때 tempList에 저장
-                if (!Utils.objectInclude(indexes, exceptNormalPosition)) {
-                    tempList.push(indexes)
-                }
-                // 인덱스값 초기화후 다시 찾기
-                i = message.indexOf(newNormalWord, ++i)
-                indexes = []
+                if (isIn) {newNormalWordList.push(normalWordPos)}
             }
+
             // 단어가 들어갔을 때 저장.
-            if (tempList.length>0) wordPositionMap[normalWord] = tempList
+            if (newNormalWordList.length>0) wordPositionMap[normalWord] = newNormalWordList
         }
 
-        // isMap일 때에는 {단어:[[위치1], [위치2],....], ...} 형식으로 출력
-        if (isMap) return wordPositionMap;
+        // showMap일 때에는 {단어:[[위치1], [위치2],....], ...} 형식으로 출력
+        if (showMap) return wordPositionMap;
         else {
-            let  resList = []
-            for (let lis of Object.values(wordPositionMap) ) {
-                resList = Utils.listUnion(resList, Utils.listUnion(lis))
-            }
-            return resList.sort((a,b)=> (a-b))
+            let wordPositionMapList = Object.values(wordPositionMap);
+            return Utils.listUnion(...wordPositionMapList);
         }
 
     }
@@ -1114,38 +1137,6 @@ class Tetrapod {
     // 어떤 단어가 비속어 목록에 포함된지 체크
     isExistNormalWord(word) {
         return (typeof(this.normalWordsMap[word]) != 'undefined')
-    }
-
-    // 단어 word가 comp 표현 안에 있는지 확인하는 함수
-    // 예시 : (봡보 => 바!보! True)
-    wordIncludeType(word, comp) {
-        let wordDisassemble = Array.isArray(word)? Utils.wordToArray(word.join("")) : Utils.wordToArray(word);
-        let compDisassemble = Array.isArray(comp)? Utils.wordToArray(comp.join("")) : Utils.wordToArray(comp);
-
-        let res = true; // 참일 때 확인.
-        if (wordDisassemble.length !== compDisassemble.length ) return false;
-        else {
-            for (let ind in compDisassemble) {
-                let wordChar = wordDisassemble[ind][0] // word의 낱자
-                let compChar = compDisassemble[ind][0] // comp의 낱자
-                let wordType = wordDisassemble[ind][1] // wordType
-                let compType = compDisassemble[ind][1] // compType
-                let nextChar = ""
-                if (ind < compDisassemble.length-1) nextChar = compDisassemble[Number(ind)+1].slice(0)[0]
-
-                if (wordType && wordType !== compType) return false;
-                else if (wordType === compType) res = res && (wordChar === compChar)
-                else if (!wordType && compType ==="!") {
-                    res = res && (this.isKindChar(wordChar, compChar, nextChar))
-                }
-                else if (!wordType && compType === "+") {
-                    res = res && (this.isInChar(wordChar, compChar))
-                }
-                if (!res) return false;
-            }
-            return true;
-        }
-
     }
 
     // 비속어 여부 파악하기
@@ -1182,190 +1173,6 @@ class Tetrapod {
     }
 
 
-
-    // 유사 낱자 검사. 낱자에 가! 형태로 표현되었을 때 갸 같은 글자도 포함되게 함
-    // char : 유사한지 비교할 낱자
-    // comp : 낱자. comp!에 char가 포함되는 경우 true, 아닌 경우 false를 반환한다.
-    // following : !뒤에 오는 낱자. 없으면 ""
-    // 추가- this.strongerCheck가 true일 때에는 영어, 유사자형도 체크한다.
-    isKindChar(char, comp, following="") {
-        // 초성중성종성 분리 데이터 이용하기
-        // 0720 수정 - disassemble 작업단위를 part단위로 수정 및 simObject 간소
-        let charDisassemble = Utils.choJungJong(char, 'part');
-        let charCho= charDisassemble.cho[0];
-        let charJung = charDisassemble.jung[0];
-        let charJong = charDisassemble.jong[0]?charDisassemble.jong[0]:"";
-        let compDisassemble = Utils.choJungJong(comp, 'part');
-        let compCho= compDisassemble.cho[0];
-        let compJung = compDisassemble.jung[0];
-        let compJong = compDisassemble.jong[0]?compDisassemble.jong[0]:"";
-        let followDisassemble = !(/^[가-힣]$/.test(following))?{cho:[], jung:[], jong:[]}:Utils.choJungJong(following, 'part');// 다음 자모 분해
-        let followCho= followDisassemble.cho[0]?followDisassemble.cho[0]:'';
-        let followJung = followDisassemble.jung[0]?followDisassemble.jung[0]:'';
-        let resi = false; // 초성 유사음
-        let resm = false; // 중성 유사음
-        let rese = false; // 종성 유사음
-
-        // 치음-> 다, 자,짜, 차 등
-        const toothConsonant = Utils.toothConsonant;
-        // i모음 -> 야, 여, 의, 이 등
-        const iVowel = Utils.iVowel;
-
-        // 유사초성. 가 -> 까, 카
-        const simInit = Utils.simInit;
-
-        // i모음에서 유사초성
-        const iSimInit = Utils.iSimInit;
-
-        // 유사중성.  고 -> 거, 교
-        const simMiddle = Utils.simMiddle;
-
-        // 초성이 치음일 때 유사중성 for ㄷ,ㄸ,ㅅ,ㅆ,ㅈ,ㅊ,ㅉ,ㅌ 이 경우는 y복모음 구별불가인 특수 케이스
-        const toothSimMiddle =  Utils.toothSimMiddle;
-        // 유사종성
-        const simEnd = Utils.simEnd;
-
-        // 뒷글자에 의한 자음동화. 뒷글자가
-        // const jointConsonant = Utils.jointConsonant;
-
-        //뒷글자에 의한 ㅣ 모음동화 잡아내기
-        const jointVowel = Utils.jointVowel;
-
-        // 우선 유사초성여부 찾아내기. i모음일 때부터
-        if (iVowel.indexOf(compJung)>-1 && charJung === compJung && iSimInit[compCho].indexOf(charCho)>-1 ) {
-            resi = true;
-        }
-        // i모음이 아닐 때는 simInit으로 비교
-        else if (simInit[compCho].indexOf(charCho)>-1) {
-            resi = true;
-        }
-
-        // 유사중음 찾아내기. 치음의 경우
-        if (resi && toothConsonant.indexOf(compCho)!== -1 && toothSimMiddle[compJung].indexOf(charJung)>-1) {
-            resm = true;
-        }
-        // 치음 아닌 경우
-        else if (resi && simMiddle[compJung].indexOf(charJung)>-1) {
-            resm = true;
-        }
-        // 아니면 뒤의 음절 이용해서 동화 반영
-        else if (resi && ['ㅣ', 'ㅢ'].indexOf(followJung)>-1 && Object.keys(jointVowel).indexOf(compJung)>-1 && jointVowel[compJung].indexOf(charJung)>-1) {
-            resm = true;
-        }
-
-        // 유사종음 찾아내기.
-        let charJongPlus = '';
-        // 우선 char 글자 받침이 comp와 동일하거나 유사받침으로 포함될 때는 무조건 OK
-
-        if (resi && resm && simEnd[compJong].indexOf(charJong)>-1) {
-            rese = true;
-        }
-        // 아니면 다음 캐릭터의 초성을 받침으로 가져와보자
-        else if (resi && resm && followCho!== "") {
-            // 다음 초성을 가져와서 받침으로 조합하기
-            charJongPlus = Hangul.assemble(Hangul.disassemble(comp).concat([followCho]));
-            if(charJongPlus.length === 1) {
-                let newJong = Utils.choJungJong(charJongPlus, 'part').jong[0];
-                if (simEnd[newJong].indexOf(charJong)>-1) {
-                    rese = true;
-                }
-            }
-        }
-        // 마지막 확인. Utils.joinedSyllable을 이용해서 같은 결과 유도하는지 확인해보자
-        if (resi && resm && !rese && /[가-힣]/.test(following)) {
-            let resJS = Utils.joinedSyllable(char, following, true, true);
-            let compJS= Utils.joinedSyllable(comp, following, true, true);
-            let compJS2 = [''];
-            if (charJongPlus!=="" && charJongPlus.length ===1) compJS2 = Utils.joinedSyllable(charJongPlus, following, true, true);
-            if (resJS[0] === compJS[0] || resJS[0] === compJS2[0]) rese = true;
-        }
-
-        // // 또 comp 받침 글자를 char가 포함하는 경우 무조건 OK
-        // else if (compDisassemble["jong"].length>0 && Utils.objectInclude(compDisassemble["jong"], charDisassemble["jong"]) ) {
-        //     rese = true;
-        // }
-        // // 자음동화. comp에 받침이 없을 때 받침 맨 뒷글자가 follow의 초성과 자음동화를 이룰 때
-        // else if (followDisassemble["cho"].length>0 && compDisassemble["jong"].length ===0 &&  charDisassemble["jong"].slice(-1)[0] === followDisassemble["cho"][0] ) {
-        //     rese = true;
-        // }
-        // else if (followDisassemble["cho"].length>0 && compDisassemble["jong"].length ===0 && jointConsonant[ followDisassemble["cho"][0] ]!== undefined && jointConsonant[ followDisassemble["cho"][0] ].indexOf( charDisassemble["jong"].slice(-1)[0] ) !==-1 ) {
-        //     rese = true;
-        // }
-
-        return resi && resm && rese;
-    }
-
-    // wordToArray 매크로 중 +기호와 관련된 대상에 대한 포함 여부
-    // 간(char) -> 가+(comp)에 속해 있으므로 true.
-    isInChar(char, comp) {
-        let charPart= Utils.disassemble(char, 'sound'); //그룹에 포함될 사운드. 음소 단위로 분해
-        let compPart = Utils.disassemble(comp, 'sound'); // +가 있는 비교 사운드. 음소 단위로 분해
-        // 예외처리 : 기+에 괴, 쌍모음은 들어가지 않게 처리할 것
-        if (compPart[1]==='ㅣ' && charPart[1]==='ㅗ' && charPart[2] === 'ㅣ') {
-            return false;
-        }
-        // 기+에 갸 등 이중모음 안 들어가게 처리
-        else if (compPart[1] === 'ㅣ' && !/[ㅏ-ㅣ]/.test(compPart[2]) && /[ㅏ-ㅡ]/.test(charPart[2])) {
-            return false;
-        }
-        // 나머지 - charPart가 compPart의 모든 자모를 포함하면 true
-        else {
-            return Utils.objectInclude(compPart, charPart, true);
-        }
-
-    }
-
-    //어떤 단어가 다른 단어에 포함되는지 체크하기
-    wordInclude(inc, exc) {
-        // wordToArray 형태로 inc, exc 변환하기. 이 때 단어 붙여서 변환하기
-        if (typeof inc === "string") inc = Utils.wordToArray(inc);
-        else if (Array.isArray(inc)) inc = Utils.wordToArray(inc.join(""));
-
-        if (typeof exc === "string") exc = Utils.wordToArray(exc);
-        else if (Array.isArray(exc)) exc = Utils.wordToArray(exc.join(""));
-
-        for(let i=0; i<exc.length - inc.length; i++) {
-            // wordIncludeType 함수를 사용해서 비교해보자.
-            if (this.wordIncludeType(inc, exc.slice(i, i+inc.length))) return true;
-        }
-
-        return false;
-    }
-
-    // 한글 조합 함수. 각 원소들을 Hangul.assemble(Hangul.disassemble())로 조합하는데 사용합니다. isIgnoreComma 옵션은 파서 문자 ,를 무시할지 물어봅니다.
-    assembleHangul(elem, isIgnoreComma = true) {
-        return Utils.listMap(elem, x=>(
-            isIgnoreComma ? Hangul.assemble(Hangul.disassemble(x)).replace(".,", "，").replace(",","").replace("，",",")
-                : Hangul.assemble(Hangul.disassemble(x))
-        ));
-    }
-
-    // 단어 리스트가 존재할 때 wordToArray로 배열하고 길이 역순으로 정렬:
-    // ['가랑비', '나!무', '돼지갈비'] -> [[['돼','지','갈','비'], ['가','랑','비'], ['나!', '무']], ['돼지갈비', '가랑비', '나!무']]
-    parseFromList(wordList) {
-        let res  = []
-        for (let word of wordList) {
-            res.push([Utils.wordToArray(word), word])
-        }
-        res.sort((a,b) => (a[1].length-b[1].length)).reverse()
-        return [res.map(x=>x[0]), res.map(x=> x[1])]
-    }
-
-    // 메시지 맵에서 수정된 맵의 포지션을 원본 맵에서 유도하기
-    getOriginalPosition(messageMap, positionList) {
-        const parsedMessage= Utils.parseMap(messageMap);
-        const totalRes = parsedMessage.messageIndex;
-        const joinedParsedMessage = this.assembleHangul(parsedMessage.joinedMessage, false);
-        let res = []
-        for (let pos of positionList) {
-            let firstIndex = totalRes[pos];
-            let secondIndex = pos == totalRes.length-1 ? joinedParsedMessage.split('').length : totalRes[Number(pos)+1]
-            let counted = Number(secondIndex) - Number(firstIndex);
-            res = res.concat([...Array(counted).keys()].map(x=> x+firstIndex));
-        }
-        return res;
-    }
-
     // 비속어 검사시 영어표현의 위치를 잡아내는 함수
     // 예시 : ([[지!,'랄'], ziral) =>[0,1,2,3,4] )
     // isMap일 때에는 {position: [], originalPosition: []} 형태로 출력
@@ -1374,7 +1181,7 @@ class Tetrapod {
         let res = [] // 리스트 형태로 출력. 각 원소는 [1,2,4] 형식으로 출력함.
         let originalRes = [] // 원문의 위치 리스트 형태로 출력. isMap이 참일 때만 사용 가능
         let messageParse = isMap ? Utils.parseMap(message) : {messageList:[], messageIndex: [], parsedMessage:[], joinedMessage:'', joinedParsedMessage: '' }
-        let newMessage= isMap? this.assembleHangul(messageParse.joinedParsedMessage, false): message; // 결과 메시지
+        let newMessage= isMap? Utils.assembleHangul(messageParse.joinedParsedMessage, false): message; // 결과 메시지
         let msgMap;
 
         // 반복되는 프로세스를 callback으로 정리
@@ -1384,11 +1191,11 @@ class Tetrapod {
             console.log(wordResult);
             if (wordResult.originalPositions[0].length > 0) {
                 res = res.concat(wordResult.originalPositions[0]);
-                // isMap일 때는 modRes를 이용해서 수정된 위치를 잡은 뒤 getOriginalPosition으로 원본 위치 잡아내기
+                // isMap일 때는 modRes를 이용해서 수정된 위치를 잡은 뒤 originalPosition으로 원본 위치 잡아내기
                 if (isMap) {
                     let modRes = wordResult.originalPositions[0];
                     for (let position of modRes) {
-                        let originalPosition = this.getOriginalPosition(message, position);
+                        let originalPosition = Utils.originalPosition(message, position);
                         originalRes.push(originalPosition);
                     }
                 }
@@ -1459,14 +1266,14 @@ class Tetrapod {
                     // console.log("SOLVEDDATA", solvedData)
                     newData[i][itemIndex] = null
                     newData[i] = newData[i].concat(solvedData)
-                    // data[i] = this.assembleHangul(data[i])
+                    // data[i] = Utils.assembleHangul(data[i])
 
                 } else if(!Array.isArray(item) && typeof item === 'object'){
 
                     // 부가 함수를 사용한 경우
                     // 지정된 함수가 반환하는 리스트를 반영합니다.
                     newData[i] = newData[i].concat(this.recursiveComponent(item, variable, nonParsedVariable))
-                    // data[i] = this.assembleHangul(data[i])
+                    // data[i] = Utils.assembleHangul(data[i])
 
                 } else if(typeof item === 'string' && item[0] === '*'){
 
@@ -1483,7 +1290,7 @@ class Tetrapod {
                         //  console.log(`1함수호출됨: ${varName}`)
 
                         newData[i] = newData[i].concat(variable[varName])
-                        // data[i] = this.assembleHangul(data[i])
+                        // data[i] = Utils.assembleHangul(data[i])
                     }
                     // 아니면 nonParsedVariable에서 변수가 있는지 확인해보기.
                     else {
@@ -1494,7 +1301,7 @@ class Tetrapod {
                             //   console.log(`2함수진행됨: ${varName}`)
                             let parsedHeaderVariable = this.recursiveList(nonParsedVariable[varName], nonParsedVariable, true)
                             newData[i] = newData[i].concat(parsedHeaderVariable)
-                            // data[i] = this.assembleHangul(data[i])
+                            // data[i] = Utils.assembleHangul(data[i])
                             //  console.log(`2함수결과:`)
                             //  console.log(parsedHeaderVariable.length)
                             if(parsedHeaderVariable.length == 0)
@@ -1571,7 +1378,7 @@ class Tetrapod {
                     if(typeof parsedVaraible[varName] !== 'undefined' && !isVariableParse){
                         // console.log("\n\nParsedVariable", parsedVaraible[varName])
                         rebuild = rebuild.concat(parsedVaraible[varName])
-                        // rebuild = this.assembleHangul(rebuild)
+                        // rebuild = Utils.assembleHangul(rebuild)
                     }else{
                         if(isVariableParse){
 
@@ -1580,7 +1387,7 @@ class Tetrapod {
                             let parsedHeaderVariable = this.recursiveList(variable[varName], variable, true)
                             // console.log("\n\nParsedHeaderVariable", parsedHeaderVariable)
                             rebuild = rebuild.concat(parsedHeaderVariable)
-                            // rebuild = this.assembleHangul(rebuild)
+                            // rebuild = Utils.assembleHangul(rebuild)
                         }else{
                             throw new Error(`${varName} 음절 변수를 찾을 수 없습니다.`)
                         }
@@ -1592,13 +1399,13 @@ class Tetrapod {
                 // 데이터 항목이 배열인 경우
                 // 재귀 컴포넌트 해석을 진행합니다.
                 rebuild = rebuild.concat(this.recursiveComponent(item, parsedVaraible, variable))
-                // rebuild = this.assembleHangul(rebuild)
+                // rebuild = Utils.assembleHangul(rebuild)
             }else{
 
                 // 부가 함수를 사용한 경우
                 // 지정된 함수가 반환하는 리스트를 반영합니다.
                 rebuild = rebuild.concat(this.additionalType(item, parsedVaraible, variable))
-                // rebuild = this.assembleHangul(rebuild)
+                // rebuild = Utils.assembleHangul(rebuild)
             }
         }
         // console.log('recursiveList() end')
@@ -1650,6 +1457,6 @@ class Tetrapod {
         console.log('additionalType() end')
         return list
     }
-}
+};
 
 module.exports = Tetrapod;

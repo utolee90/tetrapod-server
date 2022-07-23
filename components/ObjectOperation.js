@@ -30,6 +30,22 @@ const ObjectOperation = {
 
     },
 
+    // 포함관계 정리 - elem이 object 안에 있는지 확인
+    objectIn : (elem, object) => {
+        // 우선 elem 파악
+        if (typeof object === "object") {
+            if (typeof elem === "string" || typeof elem ==="number" || typeof elem ==="boolean") {
+                return Object.values(object).indexOf(elem)!==-1;
+            }
+            else if (typeof elem === "object") {
+                for (let x in object) {
+                    if (ObjectOperation.objectEqual(object[x], elem)) return true;
+                }
+            }
+        }
+        return false;
+    },
+
     // 배열/오브젝트의 포함관계 체크. obj(a, b)에서  a가 b안에 들어갈 때 True
     objectInclude: (inc, exc, order=false) => {
 
@@ -68,7 +84,6 @@ const ObjectOperation = {
             }
 
         }
-
         // 위의 작업 실행 못하면 거짓 출력.
         return false;
 
@@ -156,64 +171,45 @@ const ObjectOperation = {
 
     },
 
-    // 리스트를 곱하기. 예시  [[1,2,3],[4,5,6]] => [[1,4], [1,5], [1,6], [2,4], [2,5], [2,6], [3,4], [3,5], [3,6]]
-    productList : (list) => {
-        if (Array.isArray(list)) {
-            if (list.length ===0) return [];
-            else if (list.length ===1 ) {
-                if (list[0].length>0) {
-                    return list[0].map(x=> [x])
-                }
-                else return [];
+    // 리스트를 곱하기. 예시  ([1,2,3],[4,5,6]) => [[1,4], [1,5], [1,6], [2,4], [2,5], [2,6], [3,4], [3,5], [3,6]]
+    // 다른 함수들과 입력방식 통일해보자. (원소1, 원소2,...) 형태로 풀어쓰기를 기본으로 바꾸어보자.
+    productList : (...list) => {
+
+        if (list.length ===0) return [];
+        // 1차원 배열일 때 => [1,2,3] => [[1],[2],[3]] 이런식으로 처리
+        else if (list.length ===1 ) {
+            if (Array.isArray(list[0]) && list[0].length>0) {
+                return list[0].map(x=> [x])
             }
-            else if (list.length ===2 ) {
-                let res = [];
-                for (let fele of list[0]) {
-                    for (let sele of list[1]) {
-                        res.push([fele, sele]);
+            else return [];
+        }
+        // 원소 2개일 때 -> [앞원소,뒷원소] 합치기
+        else if (list.length ===2 ) {
+            let res = [];
+            for (let fe of list[0]) {
+                for (let se of list[1]) {
+                    res.push([fe, se]);
+                }
+            }
+            return res;
+        }
+        // 원소 3개 이상이면 (앞의 원소들 productList)에 맨 뒷원소 곱하기 이용해보자.
+        else {
+            let res =[];
+            let res0 = ObjectOperation.productList(...list.slice(0,-1)); // 앞부분까지 모두 곱해보자.
+            if (res0.length ===0 || list.slice(-1)[0].length===0) return []; // 곱할 대상이 하나라도 비어있으면 빈 리스트 출력
+            else {
+                for (let fe of res0) {
+                    for (let se of list.slice(-1)[0]) {
+                        res.push([...fe, se]);
                     }
                 }
                 return res;
             }
-            else {
-                let res =[];
-                let res0 = ObjectOperation.productList(list.slice(0,-1));
-                if (res0.length ===0 || list.slice(-1)[0].length===0) return [];
-                else {
-                    let fele;
-                    for (fele of res0) {
-                        let sele;
-                        for (sele of list.slice(-1)[0]) {
-                            res.push([...fele, sele]);
-                        }
-                    }
-                    return res;
-                }
+        }
 
-            }
-        }
-        else {
-            return null;
-        }
     },
 
-    // 포함관계 정리 - elem이 object 안에 있는지 확인
-    objectIn : (elem, object) => {
-        // 우선 elem 파악
-        if (typeof object === "object") {
-            if (typeof elem === "string" || typeof elem ==="number" || typeof elem ==="boolean") {
-                return Object.values(object).indexOf(elem)!==-1;
-            }
-            else if (typeof elem === "object") {
-                for (let x in object) {
-                    if (ObjectOperation.objectEqual(object[x], elem)) return true;
-                }
-                return false;
-            }
-            else return false;
-        }
-        else return false;
-    },
 
     // 리스트 합집합 구하기. 리스트 원소가 일반이면 그냥 더하기, 오브젝트면 원소들을 union 하기
     listUnion : (...list) => {
@@ -230,21 +226,72 @@ const ObjectOperation = {
         }
         return res;
     },
+
     // 리스트 교집합 구하기
     listIntersection: (...list) => {
-        let res = [];
-        if (list.length>0) {
-            for (let y in list[0]) {
-                let tmpRes = true;
-                for (let x of list) {
-                    tmpRes = tmpRes && ObjectOperation.objectIn(list[0][y], x)
-                }
-                if (tmpRes) res.push(list[0][y])
-            }
-            return res;
+        let res = []; // 빈 리스트 추가
+        // 리스트 길이가 1일 때는 그냥 출력
+        if (list.length === 1) {
+            res = list[0];
         }
-        else return [];
+        // list 원소가 1보대 길면 반복작업 잡기
+        else if (list.length > 1) {
+            for (let elem of res[0]) { // 첫 번째 리스트의 원소에 대해서만 검사
+                let isIntersected = true;
+                for (let partList of list.slice(1)) {
+                    isIntersected = ObjectOperation.objectIn(elem, partList);// 리스트에서 원소가 들어기는지 확인
+                    if (!isIntersected) break;
+                }
+                if (isIntersected) res.push(elem);
+            }
+        }
+        return res;
     },
+
+    //빠른 연산을 위해 서로소 요건 판별하기
+    isDisjoint: (a, b) => {
+        if (typeof a === typeof b && typeof a === "object") {
+            for (var i in a) {
+                // 하나라도 안에 있으면 거짓을 출력.
+                if (ObjectOperation.objectIn(a[i], b)) return false;
+            }
+            return true;
+        }
+        return false
+    },
+
+    // 리스트 차집합 구하기 ori-diff
+    listDifference: (a,b) => {
+        let res = [];
+        for (let x of a) {
+            if (!Utils.objectIn(x, b)) res.push(x)
+        }
+        return res;
+    },
+
+    // 리스트에서 특정 타입만 필터링. type는 단순 문자열 혹은 리스트일 수 있음
+    filterList: (list, type) => {
+        let res = []
+        // typeof 체크용
+        const typeCheck = (x, checkType) => {
+            if (['number', 'string', 'boolean', 'function', 'object', 'function', 'symbol', 'undefined'].indexOf(checkType) > -1) {
+                return typeof x === checkType;
+            } else if (['integer', 'int'].indexOf(checkType) > -1) return typeof x === 'number' && x === Math.floor(x);
+            else if (['array', 'list'].indexOf(checkType) > -1) return Array.isArray(x);
+            else if (['key', 'keyed', 'keyObject', 'dict'].indexOf(checkType) > -1) return (typeof x === 'object' && !Array.isArray(x));
+            else return false;
+        }
+
+        if (typeof type === "string") {
+            res = list.filter(x => (typeCheck(x, type)))
+        }
+        // 문자열의 리스트일 때는 원소들을 모두 union 해보자.
+        else if (Array.isArray(type) && typeof type[0] === "string") {
+            // type 리스트의 모든 원소에 타입체크 후 하나라도 true가 있으면 넣는다.
+            res = list.filter(x => (type.map(y => typeCheck(x, y)).indexOf(true) > -1));
+        }
+        return res;
+    }
 };
 
-module.exports =  ObjectOperation;
+module.exports = ObjectOperation;
