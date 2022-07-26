@@ -501,7 +501,7 @@ class Tetrapod {
         }
 
         // isStrong 옵션이 있을 때에는 dropDouble한 메시지도 같이 검사한다.
-        if(isStrong && (needMultipleCheck || res.positions.length ===0)) {
+        if(isStrong) {
             // 결과 추가
             let ddMap = Utils.dropDouble(message, true);
             let ddsMap = Utils.dropDouble(message, true, true);
@@ -512,42 +512,44 @@ class Tetrapod {
                 ddsMessage: ddsMessage, ddsFound: [], ddsPositions: [], ddsKeyWord: [], ddsType:[]
             }
 
-            let ddFind = this.find(ddMessage, needMultipleCheck, splitCheck, false, false);
-            let ddsFind = this.find(ddsMessage, needMultipleCheck, splitCheck, false, false);
-            let ddFindPositions = ddFind.positions;
-            let ddsFindPositions = ddsFind.positions;
+            if (needMultipleCheck || res.positions.length ===0) {
+                let ddFind = this.find(ddMessage, needMultipleCheck, splitCheck, false, false);
+                let ddsFind = this.find(ddsMessage, needMultipleCheck, splitCheck, false, false);
+                let ddFindPositions = ddFind.positions;
+                let ddsFindPositions = ddsFind.positions;
 
-            // ddFind.positions 기준으로 조회
-            // found, positions, keyWord, type은 모두 길이가 동일하다는 점을 이용해보자.
-            for (let idx3  in ddFindPositions) {
-                let oddPosition = Utils.originalPosition(ddMap, ddFindPositions[idx3]);
-                if (!Utils.objectIn(oddPosition, res.positions)) {
-                    resPlus.ddPositions.push(oddPosition);
-                    let originalWord = message.split("").filter((x, idx)=> (oddPosition.indexOf(idx)>-1)).join("");
-                    resPlus.ddFound.push(originalWord);
-                    let ddFoundKey = ddFind.keyWord[idx3];
-                    resPlus.ddKeyWord.push(ddFoundKey);
-                    let ddType = ddFind.type[idx3];
-                    resPlus.ddType.push(ddType);
-                }
-                if (!needMultipleCheck && resPlus.ddPositions.length > 0) break;
-            }
-
-            // ddFind.positions 기준으로 조회
-            // found, positions, keyWord, type은 모두 길이가 동일하다는 점을 이용해보자.
-            if (needMultipleCheck || resPlus.ddPositions.length===0) {
-                for (let idx4  in ddsFindPositions) {
-                    let oddsPosition = Utils.originalPosition(ddsMap, ddsFindPositions[idx4]);
-                    if (!Utils.objectIn(oddsPosition, res.positions) && !Utils.objectIn(oddsPosition, resPlus.ddPositions)) {
-                        resPlus.ddsPositions.push(oddsPosition);
-                        let originalWord = message.split("").filter((x, idx) => (oddsPosition.indexOf(idx) > -1)).join("");
-                        resPlus.ddsFound.push(originalWord);
-                        let ddsFoundKey = ddsFind.keyWord[idx4];
-                        resPlus.ddsKeyWord.push(ddsFoundKey);
-                        let ddsType = ddsFind.type[idx4];
-                        resPlus.ddsType.push(ddsType);
+                // ddFind.positions 기준으로 조회
+                // found, positions, keyWord, type은 모두 길이가 동일하다는 점을 이용해보자.
+                for (let idx3  in ddFindPositions) {
+                    let oddPosition = Utils.originalPosition(ddMap, ddFindPositions[idx3]);
+                    if (!Utils.objectIn(oddPosition, res.positions)) {
+                        resPlus.ddPositions.push(oddPosition);
+                        let originalWord = message.split("").filter((x, idx)=> (oddPosition.indexOf(idx)>-1)).join("");
+                        resPlus.ddFound.push(originalWord);
+                        let ddFoundKey = ddFind.keyWord[idx3];
+                        resPlus.ddKeyWord.push(ddFoundKey);
+                        let ddType = ddFind.type[idx3];
+                        resPlus.ddType.push(ddType);
                     }
-                    if (!needMultipleCheck && resPlus.ddsPositions.length > 0) break;
+                    if (!needMultipleCheck && resPlus.ddPositions.length > 0) break;
+                }
+
+                // ddFind.positions 기준으로 조회
+                // found, positions, keyWord, type은 모두 길이가 동일하다는 점을 이용해보자.
+                if (needMultipleCheck || resPlus.ddPositions.length===0) {
+                    for (let idx4  in ddsFindPositions) {
+                        let oddsPosition = Utils.originalPosition(ddsMap, ddsFindPositions[idx4]);
+                        if (!Utils.objectIn(oddsPosition, res.positions) && !Utils.objectIn(oddsPosition, resPlus.ddPositions)) {
+                            resPlus.ddsPositions.push(oddsPosition);
+                            let originalWord = message.split("").filter((x, idx) => (oddsPosition.indexOf(idx) > -1)).join("");
+                            resPlus.ddsFound.push(originalWord);
+                            let ddsFoundKey = ddsFind.keyWord[idx4];
+                            resPlus.ddsKeyWord.push(ddsFoundKey);
+                            let ddsType = ddsFind.type[idx4];
+                            resPlus.ddsType.push(ddsType);
+                        }
+                        if (!needMultipleCheck && resPlus.ddsPositions.length > 0) break;
+                    }
                 }
             }
 
